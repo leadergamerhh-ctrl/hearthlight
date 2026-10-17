@@ -1,0 +1,15 @@
+{
+  "name": "hearthlight",
+  "version": "1.0.0",
+  "description": "Hearthlight - a top-down co-op action RPG in the browser",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "license": "MIT"
+}
