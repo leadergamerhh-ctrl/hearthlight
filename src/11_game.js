@@ -608,7 +608,12 @@ function tickSim(dt) {
   if (n >= 8) _acc = 0;
   if (G.P && G.scene !== 'title') { G.P.stats.playtime += dt; _achT += dt; if (_achT > 1) { _achT = 0; checkAchievements(); } }
 }
+let _frameErrT = 0;
 function frame(t) {
+  requestAnimationFrame(frame); // queue first: one bad frame must never stop the game loop
+  try { frameBody(); } catch (e) { if (performance.now() - _frameErrT > 5000) { _frameErrT = performance.now(); console.error('frame error', e); } }
+}
+function frameBody() {
   const pn = performance.now(), dt = Math.min(0.1, Math.max(0, (pn - _last) / 1000)); _last = pn; _lastFrameAt = pn;
   G.rt += dt;
   tickSim(dt);
@@ -621,7 +626,6 @@ function frame(t) {
   render();
   if (G.scene !== 'title') updateHUD(dt);
   if (G.scene === 'dungeon' && G.me && !G.me.dead && !G.me.downed && G.me.hp < G.me.maxHp * 0.3) { G._hb = (G._hb || 0) - dt; if (G._hb <= 0) { G._hb = 0.5 + 0.6 * G.me.hp / (G.me.maxHp * 0.3); SFX.play('heartbeat', 0.9); } }
-  requestAnimationFrame(frame);
 }
 // keep simulating (and networking) while the tab is hidden: rAF stops in background tabs
 // Watchdog: browsers stop requestAnimationFrame for hidden or fully covered windows (sometimes

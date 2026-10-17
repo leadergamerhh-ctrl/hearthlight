@@ -10,7 +10,8 @@ function initRender() {
 }
 function resize() {
   const S = Math.max(2, Math.round(window.innerHeight / 260));
-  R.S = S; R.W = Math.ceil(window.innerWidth / S); R.H = Math.ceil(window.innerHeight / S);
+  // never let a canvas reach 0x0 (a tab can report a zero-size window while it opens)
+  R.S = S; R.W = Math.max(64, Math.ceil(window.innerWidth / S)); R.H = Math.max(36, Math.ceil(window.innerHeight / S));
   R.cv.width = R.W; R.cv.height = R.H; R.cv.style.width = R.W * S + 'px'; R.cv.style.height = R.H * S + 'px';
   R.ctx.imageSmoothingEnabled = false;
   R.light.width = R.W; R.light.height = R.H;
