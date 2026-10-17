@@ -18,10 +18,13 @@ build.js       the build script (only needed if you edit src/)
 
 ## Play online
 
-**https://leadergamerhh-ctrl.github.io/hearthlight/** runs the whole game in your browser. Solo
-play needs nothing else. For co-op from the website, one player runs the server below; on that
-computer the default address `ws://localhost:8080` works, and friends use the `wss://` address
-of a tunnel (see *Friends over the internet*).
+**https://leadergamerhh-ctrl.github.io/hearthlight/** runs the whole game in your browser for
+solo play, with nothing to install. Saves stay in your browser.
+
+For co-op, one player runs the server below and everyone opens the game from *that server's*
+address (`http://localhost:8080`, its LAN address, or a tunnel link). The server hosts the same
+game. Browsers block a public website from connecting to a server on your own computer, so the
+GitHub Pages site can't reach a local server.
 
 ## Play solo (no server needed)
 

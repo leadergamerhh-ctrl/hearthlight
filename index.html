@@ -5156,7 +5156,7 @@ function coopForm(body, after) {
     h('span', { class: 'note', style: { margin: '0 8px' } }, 'or'), code,
     btn('Join', async () => { const c = code.value.trim().toUpperCase(); if (c.length !== 4) { err.textContent = 'Enter the 4-letter room code.'; return; } busy(true); err.textContent = 'Connecting…'; try { try { localStorage.setItem('hl_server', url.value.trim()); } catch (e) { } await startJoining(c, url.value.trim()); err.textContent = ''; closeMenu(); after && after(); } catch (e) { err.textContent = e.message; Net.leave(); } busy(false); })));
   body.appendChild(err);
-  body.appendChild(h('div', { class: 'note', style: { maxWidth: '600px', lineHeight: 1.5 } }, 'Co-op needs one player to run the free Hearthlight server (node server.js, see the README). Use ws://localhost:8080 on that computer, or the wss:// address of a tunnel for friends. No server? Everything works offline in solo mode.'));
+  body.appendChild(h('div', { class: 'note', style: { maxWidth: '600px', lineHeight: 1.5 } }, /\.github\.io$/i.test(location.hostname) ? 'Co-op needs one player to run the Hearthlight server (node server.js, see the README). Then everyone opens the game from that server\'s address (http://localhost:8080, its LAN address, or a tunnel link) instead of this website, because browsers block websites from reaching servers on your own computer.' : 'No server running? Everything works offline in solo mode.'));
 }
 
 // ---------------------------------------------------------------------------
