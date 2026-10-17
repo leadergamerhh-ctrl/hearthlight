@@ -386,13 +386,14 @@ function coopForm(body, after) {
   const url = h('input', { type: 'text', value: Net.defaultUrl(), style: { width: '260px' } });
   const code = h('input', { type: 'text', placeholder: 'CODE', maxlength: 4, style: { width: '110px', textTransform: 'uppercase', letterSpacing: '4px', fontSize: '18px' } });
   const busy = (b) => { body.querySelectorAll('button').forEach(x => x.disabled = b); };
+  Net.status = (t) => { err.textContent = t; };
   body.appendChild(h('div', { class: 'statrow', style: { alignItems: 'center' } }, h('span', {}, 'Server address'), url));
   body.appendChild(h('div', { class: 'row', style: { margin: '12px 0' } },
     btn('Host a game', async () => { busy(true); err.textContent = 'Connecting…'; try { try { localStorage.setItem('hl_server', url.value.trim()); } catch (e) { } await startHosting(url.value.trim()); err.textContent = ''; closeMenu(); after && after(); } catch (e) { err.textContent = e.message + ' — you can keep playing solo.'; Net.leave(); } busy(false); }, 'primary'),
     h('span', { class: 'note', style: { margin: '0 8px' } }, 'or'), code,
     btn('Join', async () => { const c = code.value.trim().toUpperCase(); if (c.length !== 4) { err.textContent = 'Enter the 4-letter room code.'; return; } busy(true); err.textContent = 'Connecting…'; try { try { localStorage.setItem('hl_server', url.value.trim()); } catch (e) { } await startJoining(c, url.value.trim()); err.textContent = ''; closeMenu(); after && after(); } catch (e) { err.textContent = e.message; Net.leave(); } busy(false); })));
   body.appendChild(err);
-  body.appendChild(h('div', { class: 'note', style: { maxWidth: '600px', lineHeight: 1.5 } }, /\.github\.io$/i.test(location.hostname) ? 'Co-op needs one player to run the Hearthlight server (node server.js, see the README). Then everyone opens the game from that server\'s address (http://localhost:8080, its LAN address, or a tunnel link) instead of this website, because browsers block websites from reaching servers on your own computer.' : 'No server running? Everything works offline in solo mode.'));
+  body.appendChild(h('div', { class: 'note', style: { maxWidth: '600px', lineHeight: 1.5 } }, /\.github\.io$/i.test(location.hostname) ? 'Co-op runs through the free Hearthlight server online. If nobody has played for a while it takes up to a minute to wake up. You can also run your own server (see the README) and open the game from its address.' : 'No server running? Everything works offline in solo mode.'));
 }
 
 // ---------------------------------------------------------------------------

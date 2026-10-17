@@ -8,6 +8,8 @@
 // ============================================================================
 const INTERP = 0.1;      // render remote things this far in the past
 const SNAP_HZ = 20, PS_HZ = 30;
+// public co-op server used by the GitHub Pages site (a free Render web service running server.js)
+const ONLINE_SERVER = 'wss://hearthlight.onrender.com';
 
 const Net = {
   ws: null, role: 'solo', pid: 0, code: null, token: null, url: null, roster: [], online: false,
@@ -17,15 +19,31 @@ const Net = {
   partySize() { return G.world ? Math.max(1, G.world.players.size) : 1; },
   defaultUrl() {
     try { const s = localStorage.getItem('hl_server'); if (s) return s; } catch (e) { }
-    // static hosting (GitHub Pages) has no game server: default to one running on this computer
-    if (/\.github\.io$/i.test(location.hostname)) return 'ws://localhost:8080';
+    // static hosting (GitHub Pages) has no game server of its own: use the public co-op server
+    if (/\.github\.io$/i.test(location.hostname)) return ONLINE_SERVER;
     if (location.protocol === 'http:' || location.protocol === 'https:') return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host;
     return 'ws://localhost:8080';
   },
-  connect(url) {
+  status: null, // optional callback(text) for connection progress
+  // Free hosts put idle servers to sleep. Ping /health until it answers (up to ~75s) before opening the socket.
+  async wake(url) {
+    if (!/^wss:\/\//i.test(url)) return;
+    const health = url.replace(/^wss:/i, 'https:').replace(/\/+$/, '') + '/health';
+    const t0 = Date.now();
+    while (Date.now() - t0 < 75000) {
+      const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const kill = setTimeout(() => ac && ac.abort(), 15000);
+      try { const r = await fetch(health, { cache: 'no-store', signal: ac ? ac.signal : undefined }); clearTimeout(kill); if (r.ok) return; } catch (e) { clearTimeout(kill); }
+      this.status && this.status(`Waking the co-op server… ${Math.round((Date.now() - t0) / 1000)}s (free servers nap when idle; this takes up to a minute)`);
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  },
+  async connect(url) {
+    await this.wake(url);
+    this.status && this.status('Connecting…');
     return new Promise((res, rej) => {
       let ws; try { ws = new WebSocket(url); } catch (e) { rej(new Error('Bad server address')); return; }
-      const to = setTimeout(() => { try { ws.close(); } catch (e) { } rej(new Error('No server found at ' + url)); }, 4000);
+      const to = setTimeout(() => { try { ws.close(); } catch (e) { } rej(new Error('No server found at ' + url)); }, /^wss:/i.test(url) ? 15000 : 4000);
       ws.onopen = () => { clearTimeout(to); this.ws = ws; this.url = url; this.online = true; res(ws); };
       ws.onerror = () => { clearTimeout(to); rej(new Error('No server found at ' + url)); };
       ws.onmessage = (ev) => { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } this.onServer(m); };

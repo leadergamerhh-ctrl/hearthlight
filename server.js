@@ -14,6 +14,9 @@ const { WebSocketServer } = require('ws');
 
 const PORT = Number(process.env.PORT) || 8080;
 const MAX_PLAYERS = 4;
+const MAX_ROOMS = 500;          // public deployments: cap how many games can be open at once
+const MSG_PER_SEC = 400;        // generous for real play (a host sends ~60/s); floods get dropped
+const MSG_KICK_PER_SEC = 2000;  // far beyond any real client: disconnect
 const HOST_GRACE_MS = 15000; // how long a room survives without its host (refresh / blip)
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1
 
@@ -26,7 +29,8 @@ const server = http.createServer((req, res) => {
       res.end(data);
     });
   } else if (url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    // CORS so the GitHub Pages site can ping (and wake) a sleeping free-tier server
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
   } else {
     res.writeHead(404); res.end('not found');
@@ -63,6 +67,12 @@ wss.on('connection', (ws, req) => {
   log('connect', req.socket.remoteAddress);
 
   ws.on('message', (raw) => {
+    // per-connection rate limit
+    const now = Date.now();
+    if (now - (ws.rateT || 0) >= 1000) { ws.rateT = now; ws.rateN = 0; }
+    ws.rateN = (ws.rateN || 0) + 1;
+    if (ws.rateN > MSG_KICK_PER_SEC) { ws.terminate(); return; }
+    if (ws.rateN > MSG_PER_SEC) return;
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
     if (!msg || typeof msg.t !== 'string') return;
@@ -80,6 +90,7 @@ wss.on('connection', (ws, req) => {
           return;
         }
       }
+      if (rooms.size >= MAX_ROOMS) { send(ws, { t: 'error', reason: 'The server is full right now. Try again in a few minutes.' }); return; }
       const code = makeCode();
       const room = { code, members: new Map(), hostTimer: null };
       const m = { pid: 0, ws, name: String(msg.name || 'Host').slice(0, 16), token: token(), goneAt: 0 };

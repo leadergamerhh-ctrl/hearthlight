@@ -1,0 +1,11 @@
+# Render blueprint: one free web service that serves the game and relays co-op traffic.
+# Render > New > Blueprint > pick this repository > Apply.
+services:
+  - type: web
+    name: hearthlight
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    autoDeploy: true

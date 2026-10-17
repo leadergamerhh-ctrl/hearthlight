@@ -21,10 +21,29 @@ build.js       the build script (only needed if you edit src/)
 **https://leadergamerhh-ctrl.github.io/hearthlight/** runs the whole game in your browser for
 solo play, with nothing to install. Saves stay in your browser.
 
-For co-op, one player runs the server below and everyone opens the game from *that server's*
-address (`http://localhost:8080`, its LAN address, or a tunnel link). The server hosts the same
-game. Browsers block a public website from connecting to a server on your own computer, so the
-GitHub Pages site can't reach a local server.
+Co-op from the website uses the public server at `wss://hearthlight.onrender.com` (a free Render
+web service running `server.js`; see *Hosting the co-op server on Render*). Free servers sleep
+after about 15 idle minutes, so the first player of a session may wait up to a minute while it
+wakes; the Co-op screen shows the progress. The server also hosts the game itself at
+https://hearthlight.onrender.com.
+
+You can always run your own server instead (below) and open the game from *its* address. Browsers
+block a public website from connecting to a server on your own computer, so with a local server,
+open `http://localhost:8080` (or its LAN address or a tunnel link) rather than the GitHub Pages site.
+
+## Hosting the co-op server on Render (free)
+
+The repository includes `render.yaml`, so Render can set everything up:
+
+1. Sign in at https://dashboard.render.com (signing in with GitHub is easiest).
+2. Choose **New → Blueprint**, connect the `hearthlight` repository, and click **Apply**.
+   This creates a free web service named `hearthlight` that runs `npm install` and `node server.js`.
+3. When the deploy finishes, the service lives at `https://hearthlight.onrender.com`
+   (if Render had to pick a different name, update `ONLINE_SERVER` in `src/08_net.js`,
+   run `node build.js`, and push).
+
+New commits to `main` redeploy automatically. The server caps open games at 500, limits how many
+messages each connection may send, and keeps no data on disk.
 
 ## Play solo (no server needed)
 
