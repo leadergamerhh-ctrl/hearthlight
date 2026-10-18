@@ -352,6 +352,7 @@ function tabSettings(body) {
   body.appendChild(slider('Screen shake', 'shake', 0, 1.5, 0.1, G.settings, () => { }));
   body.appendChild(h('div', { class: 'statrow' }, h('span', {}, 'Glow (bloom)'), btn(G.settings.bloom === false ? 'Off' : 'On', () => { G.settings.bloom = G.settings.bloom === false; saveSettings(); refreshMenu(); })));
   body.appendChild(h('div', { class: 'statrow' }, h('span', {}, 'Damage numbers'), btn(G.settings.nums === false ? 'Off' : 'On', () => { G.settings.nums = G.settings.nums === false; saveSettings(); refreshMenu(); })));
+  body.appendChild(h('div', { class: 'statrow' }, h('span', {}, 'Controller rumble'), btn(G.settings.rumble === false ? 'Off' : 'On', () => { G.settings.rumble = G.settings.rumble === false; saveSettings(); refreshMenu(); })));
   body.appendChild(h('h3', {}, 'Controls'));
   const keys = [['Move', 'W A S D / Arrows'], ['Aim', 'Mouse (or last move direction when using J/K)'], ['Light attack (3-hit combo)', 'Left click / J'], ['Heavy attack (breaks guards & poise)', 'Right click / K'], ['Block (perfect block = parry)', 'Hold Shift / L'], ['Dodge roll (invulnerable)', 'Space'], ['Ability cards', '1 – 6'], ['Healing flask', 'Q'], ['Interact / talk', 'E'], ['Menu / inventory', 'Tab or I · C character · M map · Esc pause'], ['Chat', 'Enter'], ['Emotes', 'G ping · H help! · T thanks'], ['Mute', 'N']];
   for (const [a, k] of keys) body.appendChild(h('div', { class: 'statrow' }, h('span', {}, a), h('span', { class: 'kbd' }, k)));

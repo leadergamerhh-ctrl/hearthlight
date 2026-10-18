@@ -132,7 +132,14 @@ function render(alpha) {
   ctx.restore();
   // screen space
   ctx.drawImage(R.vign, 0, 0);
-  if (G.hurtFlash > 0) { ctx.fillStyle = `rgba(160,10,20,${G.hurtFlash * 0.45})`; ctx.fillRect(0, 0, R.W, R.H); }
+  if (G.hurtFlash > 0) { // red bleeds in from the side the blow came from
+    const k = G.hurtFlash / 0.35, a = G.hurtDir ?? 0;
+    ctx.fillStyle = `rgba(160,10,20,${k * 0.12})`; ctx.fillRect(0, 0, R.W, R.H);
+    const cx = R.W / 2 + Math.cos(a) * R.W * 0.62, cy = R.H / 2 + Math.sin(a) * R.H * 0.62;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(R.W, R.H) * 0.75);
+    g.addColorStop(0, `rgba(200,20,30,${k * 0.55})`); g.addColorStop(1, 'rgba(160,10,20,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, R.W, R.H);
+  }
   const me = G.me;
   if (me && G.scene === 'dungeon' && me.hp / me.maxHp < 0.3 && !me.dead) { ctx.globalAlpha = 0.25 + Math.sin(G.rt * 6) * 0.12; ctx.drawImage(R.vign, 0, 0); ctx.fillStyle = 'rgba(120,0,10,0.18)'; ctx.fillRect(0, 0, R.W, R.H); ctx.globalAlpha = 1; }
   drawAllyArrows(ctx, w, ox, oy);

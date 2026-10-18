@@ -31,7 +31,7 @@ const SFX = (() => {
     if (!ctx) return;
     master.gain.setTargetAtTime(settings.muted ? 0 : settings.master, ctx.currentTime, 0.02);
     sfxBus.gain.setTargetAtTime(settings.sfx, ctx.currentTime, 0.02);
-    musBus.gain.setTargetAtTime(settings.music * 0.55, ctx.currentTime, 0.05);
+    musBus.gain.setTargetAtTime(settings.music * 1.0, ctx.currentTime, 0.05);
   }
   // --- primitives ---
   function osc(t, type, f, dur, vol, f2, dest, attack = 0.004) {
@@ -116,7 +116,7 @@ const SFX = (() => {
   };
 
   // per-sound mix levels (balanced from an offline render of every effect)
-  const MIX = { swing: 2.2, swingHeavy: 1.6, roll: 2.2, cast: 2, whirl: 2, gold: 2, key: 2, zap: 1.8, telegraph: 1.8, glint: 2.2, arrow: 1.6, spawn: 2, shadow: 1.6, step: 3, ui: 1.5, uiBack: 1.5, buy: 1.6, chat: 1.5, exhausted: 2, loot: 1.6, orb: 1.4, fireball: 1.5, splash: 1.6 };
+  const MIX = { swing: 2.2, swingHeavy: 1.6, roll: 2.8, cast: 2, whirl: 2, gold: 2, key: 2, zap: 1.8, telegraph: 1.8, glint: 2.2, arrow: 1.6, spawn: 2, shadow: 1.6, step: 3, ui: 1.5, uiBack: 1.5, buy: 1.6, chat: 1.5, exhausted: 2, loot: 1.6, orb: 1.4, fireball: 1.5, splash: 1.6, enemyDie: 1.3, bone: 0.7 };
   function play(name, vol = 1, pitch = 1) {
     if (!ctx || settings.muted || vol <= 0.01) return;
     const t = ctx.currentTime;
@@ -214,6 +214,9 @@ const Music = (() => {
       nextT += spb; step++;
     }
   }
+  // per-track loudness trims, measured on the music bus so every track sits at a similar level
+  // (ambient pieces around -35 dBFS RMS at default volume, combat a little hotter, boss hottest)
+  const LEVEL = { title: 2.5, village: 2.5, village2: 1.8, crypt: 2.5, forest: 2.5, cave: 2.2, abyss: 2.2, victory: 2.2, combat: 1.3, boss: 1 };
   let pending = null;
   function play(name) {
     const c = SFX.ctx; if (!c) { pending = name; return; }
@@ -223,7 +226,7 @@ const Music = (() => {
     cur = TR[name] || null;
     if (!cur) { gain = null; return; }
     gain = c.createGain(); gain.gain.setValueAtTime(0.0001, c.currentTime); gain.gain.setTargetAtTime(1, c.currentTime + 0.3, 0.5); gain.connect(SFX.musBus);
-    const wet = c.createGain(); wet.gain.value = 1; wet.connect(gain); wet.connect(SFX.verb); gain._wet = wet;
+    const wet = c.createGain(); wet.gain.value = LEVEL[name] || 1; wet.connect(gain); wet.connect(SFX.verb); gain._wet = wet;
     nextT = c.currentTime + 0.1; step = 0;
     if (!timer) timer = setInterval(schedule, 40);
   }

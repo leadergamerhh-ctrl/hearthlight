@@ -364,7 +364,7 @@ function onKill(d) {
   deathFx(d.x, d.y, d.sk, d.elite);
   G.fx.corpses.push({ sk: d.sk, x: d.x, y: d.y, t: 0, dur: 0.4, flip: Math.random() < 0.5 });
   sfxAt('enemyDie', d.x, d.y, 0.8, d.elite ? 0.7 : 1);
-  if (d.elite) { shake(6); G.flashScreen = 0.25; }
+  if (d.elite) { shake(6); G.flashScreen = 0.25; Input.rumble(0.7, 0.7, 220); }
   if (!d.xp) return;
   gainXP(d.xp);
   P.stats.kills++;
@@ -407,7 +407,11 @@ function onRoomEvent(d) {
   } else {
     r.active = false; r.cleared = true;
     for (const c of w.map.chests) if (c.room === r.i) c.hidden = false;
-    if (d.type !== 'boss') { Music.play(DUNGEONS[w.dun.did].music); SFX.play('door'); banner('Cleared', '', '', 1.2); }
+    if (d.type !== 'boss') {
+      Music.play(DUNGEONS[w.dun.did].music); SFX.play('door'); banner('Cleared', '', '', 1.2);
+      if (Net.role === 'solo') G.slowmo = Math.max(G.slowmo, 0.45);
+      shake(4); Input.rumble(0.3, 0.5, 140);
+    }
     if (G.me && (G.me.dead || G.me.downed)) respawnFallen(G.me);
   }
 }
@@ -438,7 +442,7 @@ function onBossEvent(d) {
   const w = G.world, P = G.P;
   if (d.ev === 'intro') { const B = BOSSES[d.bk]; Music.play('boss'); G.cine = 2.6; setTimeout(() => banner(B.name, B.sub, '', 3), 200); shake(6); SFX.play('roar', 1); setTimeout(() => storyOnBoss('intro', d.bk), 1400); }
   if (d.ev === 'phase') { shake(10); G.flashScreen = 0.4; if (d.msg) banner(d.msg, '', '', 2.2); SFX.play('roar', 1); }
-  if (d.ev === 'dying') { G.slowmo = 1.4; G.flashScreen = 0.6; shake(12); }
+  if (d.ev === 'dying') { G.slowmo = 1.4; G.flashScreen = 0.6; shake(12); Input.rumble(1, 1, 700); }
   if (d.ev === 'dead') {
     w.dun.bossDead = true; w.dun.portal = d.portal; w.dun.bossId = 0;
     storyOnBoss('dead', d.bk);

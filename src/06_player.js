@@ -80,6 +80,12 @@ const Input = {
     this.padBlock = !!(gp.buttons[5] && gp.buttons[5].pressed);
     if (typeof PadNav !== 'undefined') PadNav.prev = this.padPrev.slice();
   },
+  // controller rumble, only while the pad is the device in use
+  rumble(strong, weak, ms) {
+    const gp = this.pad; if (!gp || nowSec() - (this.padUsedT || -99) > 8 || (G.settings && G.settings.rumble === false)) return;
+    const va = gp.vibrationActuator; if (!va || !va.playEffect) return;
+    try { va.playEffect('dual-rumble', { duration: ms, strongMagnitude: Math.min(1, strong), weakMagnitude: Math.min(1, weak) }); } catch (e) { }
+  },
   take(a, win = 0.16) { const t = this.buf[a]; if (t && nowSec() - t <= win) { this.buf[a] = 0; return true; } return false; },
   peek(a, win = 0.16) { const t = this.buf[a]; return t && nowSec() - t <= win; },
   down(...codes) { return codes.some(c => this.keys[c]); },
@@ -398,7 +404,7 @@ function dealHit(p, w, e, h) {
     const big = h.heavy || h.crit;
     if (Net.role === 'solo') G.hitstop = Math.max(G.hitstop, big ? 0.07 : 0.035); // whole world freezes for a beat
     else p.hitstop = big ? 0.06 : 0.03; // co-op: only our own avatar pauses so the shared world never stutters
-    shake(big ? 4 : 2);
+    shake(big ? 4 : 2); Input.rumble(big ? 0.45 : 0.12, big ? 0.6 : 0.3, big ? 90 : 45);
     if (h.melee) p.mana = Math.min(p.stats.maxMana, p.mana + 1.5);
     if (p.stats.leech > 0) p.hp = Math.min(p.maxHp, p.hp + h.dmg * p.stats.leech);
     sfxAt(h.crit ? 'crit' : h.heavy ? 'hitHeavy' : 'hit', e.x, e.y, 0.9);
@@ -434,7 +440,7 @@ function hurtLocal(p, dmg, sx, sy, o = {}) {
   if (p.state === 'block' && !o.unblockable && Math.abs(angDiff(p.aim, a)) < 1.2) {
     const perfect = G.time - p.blockT < 0.18;
     if (perfect) {
-      SFX.play('parry', 1); G.slowmo = 0.25; shake(3); sparkFx(p.x + Math.cos(a) * 8, p.y - 6 + Math.sin(a) * 8, '#fff6c0', 18);
+      SFX.play('parry', 1); G.slowmo = 0.25; shake(3); Input.rumble(0.5, 0.9, 120); sparkFx(p.x + Math.cos(a) * 8, p.y - 6 + Math.sin(a) * 8, '#fff6c0', 18);
       numFx(p.x, p.y - 34, 'PARRY', '#ffe96a', 2); G.P.stats.parry = (G.P.stats.parry || 0) + 1; questEvent('parry', 1);
       p.sta = Math.min(p.stats.maxSta, p.sta + 15);
       if (o.src && o.melee) { const m = { k: 'parried', id: o.src }; if (Net.isAuth()) staggerEnemy(G.world, o.src, 1.4); else Net.send('host', m); }
@@ -453,7 +459,7 @@ function hurtLocal(p, dmg, sx, sy, o = {}) {
   dmg = Math.max(1, Math.round(dmg));
   p.hp -= dmg; p.flash = 0.12; p.iframe = 0.55;
   numFx(p.x, p.y - 34, dmg, '#ff5a4a', 1);
-  SFX.play('hurt', 1); shake(5); G.hurtFlash = 0.35;
+  SFX.play('hurt', 1); shake(5); G.hurtFlash = 0.35; G.hurtDir = a; Input.rumble(0.8, 0.5, 160);
   const kb = o.kb ?? 120; p.kx -= Math.cos(a) * kb; p.ky -= Math.sin(a) * kb;
   bloodFx(p.x, p.y - 6, a + Math.PI, '#c22a3a', 6);
   if (!(p.state === 'heavy' && p.st < p.tm.wind + p.tm.act) && p.state !== 'hurt') { if (p.state === 'drink' && !p.drank) G.P.potions++; p.state = 'hurt'; p.st = 0; p.hurtDur = 0.2; }
@@ -467,7 +473,7 @@ function perfectDodge(p) {
   p.lastDodgeT = G.time;
   p.sta = Math.min(p.stats.maxSta, p.sta + 12); p.mana = Math.min(p.stats.maxMana, p.mana + 4);
   numFx(p.x, p.y - 36, 'DODGE', '#8fe6ff', 1);
-  SFX.play('glint', 0.9, 1.3);
+  SFX.play('glint', 0.9, 1.3); Input.rumble(0, 0.35, 50);
   for (let i = 0; i < 10; i++) { const a = rnd(0, TAU); G.fx.parts.push(part(p.x, p.y - 7, Math.cos(a) * 60, Math.sin(a) * 40, pick(['#8fe6ff', '#ffffff']), 0.3, 1, true)); }
   if (Net.role === 'solo') G.slowmo = Math.max(G.slowmo, 0.12);
 }

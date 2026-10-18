@@ -139,7 +139,8 @@ B interact, RB block, LB flask, d-pad cards 1–4, LT/RT cards 5–6, Start menu
 In menus the d-pad or stick moves the highlight, A selects, B goes back, LB/RB switch tabs,
 and left/right adjusts sliders. A advances story dialogue and B skips it.
 
-**Settings** (Tab → Settings): master/music/effects volume, mute, screen shake, glow (bloom) and
+**Settings** (Tab → Settings): master/music/effects volume, mute, screen shake, glow (bloom),
+controller rumble and
 damage numbers.
 
 ## How the game is built
