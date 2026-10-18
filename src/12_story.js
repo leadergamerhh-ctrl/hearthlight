@@ -325,7 +325,11 @@ function storyOnVillage() {
   setTimeout(() => {
     if (G.scene !== 'village') return;
     if (!P.story.seen.prologue) { Story.play('prologue'); return; }
-    for (const [did, id] of RETURN_SCENES) if (P.flags.clears[did] && !P.story.seen[id]) { setTimeout(() => { if (G.scene === 'village') Story.play(id); }, 2300); return; }
+    // only the newest chapter's homecoming plays; older ones a player hurried past are stale now
+    const i = RETURN_SCENES.findIndex(([did]) => P.flags.clears[did]); if (i < 0) return;
+    for (const [, old] of RETURN_SCENES.slice(i + 1)) P.story.seen[old] = true;
+    const id = RETURN_SCENES[i][1];
+    if (!P.story.seen[id]) setTimeout(() => { if (G.scene === 'village') Story.play(id); }, 2300);
   }, 900);
 }
 function storyOnDungeon(did) { setTimeout(() => { if (G.scene === 'dungeon') Story.play(did + '_enter'); }, 2600); }

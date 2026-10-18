@@ -113,6 +113,7 @@ canvas.icon{image-rendering:pixelated;image-rendering:crisp-edges}
 .tabs{display:flex;gap:2px;margin-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .tab{padding:7px 13px;cursor:pointer;color:var(--dim);font-size:14px;border:1px solid transparent;border-bottom:none}
 .tab:hover{color:var(--text)}
+.padfocus{outline:2px solid var(--gold)!important;outline-offset:2px;box-shadow:0 0 12px rgba(255,200,90,.45)!important}
 .tab.on{color:var(--gold);background:var(--panel3);border-color:var(--border)}
 input[type=text]{background:#0d0816;border:1px solid var(--border2);color:var(--text);padding:8px 10px;font-size:15px;outline:none}
 input[type=text]:focus{border-color:var(--gold)}
@@ -2320,6 +2321,11 @@ const Input = {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const gp = [...pads].find(p => p && p.connected); this.pad = gp || null;
     if (!gp) { this.padMove = [0, 0]; return; }
+    // menus, dialogue and the title screen get focus navigation instead of gameplay input
+    if (typeof PadNav !== 'undefined' && PadNav.active()) {
+      SFX.init(); PadNav.update(gp); this.padPrev = PadNav.prev.slice();
+      this.padMove = [0, 0]; this.padBlock = false; this.padUsedT = nowSec(); return;
+    }
     const dz = (v) => Math.abs(v) < 0.22 ? 0 : v;
     let mx = dz(gp.axes[0] || 0), my = dz(gp.axes[1] || 0);
     const l = Math.hypot(mx, my); this.padMove = l > 0 ? [mx / Math.max(1, l), my / Math.max(1, l)] : [0, 0];
@@ -2339,6 +2345,7 @@ const Input = {
       this.padPrev[i] = down;
     });
     this.padBlock = !!(gp.buttons[5] && gp.buttons[5].pressed);
+    if (typeof PadNav !== 'undefined') PadNav.prev = this.padPrev.slice();
   },
   take(a, win = 0.16) { const t = this.buf[a]; if (t && nowSec() - t <= win) { this.buf[a] = 0; return true; } return false; },
   peek(a, win = 0.16) { const t = this.buf[a]; return t && nowSec() - t <= win; },
@@ -5599,14 +5606,6 @@ function enterDungeon(did, tier, seed) {
   Music.play(D.music);
   banner(D.name, TIERS[tier].name + (Net.partySize() > 1 ? ` · Party of ${Net.partySize()}` : ''), '', 3);
   storyOnDungeon(did);
-  if (!P.flags.tutDone) {
-    P.flags.tutDone = true;
-    const tips = ['Enemies <b style="color:#ff6b5e">glow red</b> before they strike. <b>Space</b> rolls — you are invulnerable for most of the roll.',
-      'Red zones fill from the centre. The hit lands the instant the fill reaches the edge.',
-      'Hold <b>Shift</b> to block. Block just as a blow lands to <b>parry</b>. <b>Right-click</b> heavies shatter shields.',
-      '<b>1–4</b> cast your ability cards (mana regenerates, melee hits restore it). <b>Q</b> drinks a flask.'];
-    tips.forEach((t, i) => setTimeout(() => { if (G.scene === 'dungeon') toast(t, '', 6); }, 3500 + i * 6500));
-  }
   saveGame();
 }
 function hostStartDungeon(did, tier) {
@@ -6106,6 +6105,7 @@ function frameBody() {
   updateFx(G.paused ? 0 : (Net.role === 'solo' && G.hitstop > 0 ? dt * 0.15 : dt));
   if (G.cine > 0) G.cine -= dt;
   Story.update(dt);
+  if (G.scene !== 'title') Hints.update(dt);
   if (!G.paused) ambientFx(dt);
   // mouse -> world
   Input.wx = Input.mx / R.S + G.cam.x - R.W / 2; Input.wy = Input.my / R.S + G.cam.y - R.H / 2;
@@ -6151,6 +6151,7 @@ function boot() {
   loadSettings();
   Sprites.init();
   Story.init();
+  Hints.init();
   initRender();
   Input.init(R.cv);
   $('chatin').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); closeChat(true); } else if (e.key === 'Escape') { e.preventDefault(); closeChat(false); } e.stopPropagation(); });
@@ -6494,7 +6495,11 @@ function storyOnVillage() {
   setTimeout(() => {
     if (G.scene !== 'village') return;
     if (!P.story.seen.prologue) { Story.play('prologue'); return; }
-    for (const [did, id] of RETURN_SCENES) if (P.flags.clears[did] && !P.story.seen[id]) { setTimeout(() => { if (G.scene === 'village') Story.play(id); }, 2300); return; }
+    // only the newest chapter's homecoming plays; older ones a player hurried past are stale now
+    const i = RETURN_SCENES.findIndex(([did]) => P.flags.clears[did]); if (i < 0) return;
+    for (const [, old] of RETURN_SCENES.slice(i + 1)) P.story.seen[old] = true;
+    const id = RETURN_SCENES[i][1];
+    if (!P.story.seen[id]) setTimeout(() => { if (G.scene === 'village') Story.play(id); }, 2300);
   }, 900);
 }
 function storyOnDungeon(did) { setTimeout(() => { if (G.scene === 'dungeon') Story.play(did + '_enter'); }, 2600); }
@@ -6565,6 +6570,140 @@ function showEndCredits() {
     p.appendChild(h('div', { style: { marginTop: '16px' } }, btn('Continue playing', () => { closeMenu(); Music.play('village'); }, 'primary')));
   }, { noClose: true });
 }
+
+// ---- 13_hints.js ----
+// ============================================================================
+//  Contextual hints: each control is taught once, at the moment it matters,
+//  instead of a wall of text up front.
+// ============================================================================
+const HINTS = {
+  roll: '<kbd>Space</kbd> Roll through the red zone. You\'re invulnerable for most of the roll.',
+  block: '<kbd>Shift</kbd> Block. Tap it just as a blow lands to <b>parry</b> and stagger the attacker.',
+  heavy: '<kbd>Right-click</kbd> Heavy attacks smash through shields. Or circle behind them.',
+  cards: '<kbd>1</kbd>–<kbd>4</kbd> Cast your ability cards. Melee hits refill mana.',
+  flask: '<kbd>Q</kbd> Drink a healing flask. Flasks refill at the Hearth.',
+  stamina: 'Out of stamina. Ease off for a moment to recover.',
+  loot: 'Walk over loot to pick it up. <kbd>Tab</kbd> opens your inventory; ▲ marks upgrades.',
+  stats: '<kbd>C</kbd> You have stat points to spend.',
+  key: 'Locked doors open on their own when your party carries a key.',
+};
+const Hints = {
+  el: null, lastAt: -99, hideT: 0,
+  init() {
+    const css = document.createElement('style');
+    css.textContent = `#hint{position:absolute;left:50%;bottom:92px;transform:translate(-50%,8px);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;
+  background:rgba(14,8,22,.92);border:1px solid var(--border2);box-shadow:0 6px 24px #000a;padding:7px 14px;font-size:14px;max-width:min(620px,90vw);text-align:center;z-index:30}
+#hint.on{opacity:1;transform:translate(-50%,0)}
+#hint kbd{font-family:var(--sans);font-size:12px;color:var(--gold);border:1px solid var(--gold2);border-bottom-width:2px;border-radius:3px;padding:0 5px;margin:0 2px;background:#1a1028}
+@media (prefers-reduced-motion: reduce){#hint{transition:none}}`;
+    document.head.appendChild(css);
+    this.el = h('div', { id: 'hint' }); $('hud').appendChild(this.el);
+  },
+  // show hint `id` once per save; returns true if it was shown now
+  show(id) {
+    const P = G.P; if (!P || G.cutscene || G.menu) return false;
+    P.hints = P.hints || {};
+    if (P.hints[id] || G.rt - this.lastAt < 7) return false;
+    P.hints[id] = 1; this.lastAt = G.rt; saveGame();
+    this.el.innerHTML = HINTS[id]; this.el.classList.add('on'); this.hideT = 6.5;
+    SFX.play('ui', 0.5, 1.3);
+    return true;
+  },
+  // watch the situation each frame and teach what's relevant
+  update(dt) {
+    if (this.hideT > 0) { this.hideT -= dt; if (this.hideT <= 0) this.el.classList.remove('on'); }
+    const P = G.P, me = G.me, w = G.world; if (!P || !me || !w || G.scene !== 'dungeon' || me.dead || me.downed) return;
+    const H = P.hints || {};
+    const now = hostTime(w);
+    if (!H.roll) for (const hz of w.hazards) { if (!hz.dmg || hz.tele < 0.4) continue; const el = now - hz.t0; if (el < 0 || el > hz.tele) continue; const g = hazardGeom(w, hz, now); if (dist(g.x, g.y, me.x, me.y) < 90) { this.show('roll'); return; } }
+    if (!H.block) for (const e of w.ents.values()) if (e.type === 'enemy' && !e.boss && e.kind === 'grunt' && e.state === 'windup' && dist(e.x, e.y, me.x, me.y) < 45) { this.show('block'); return; }
+    if (!H.heavy) for (const e of w.ents.values()) if (e.type === 'enemy' && e.kind === 'shield' && e.state !== 'spawn' && dist(e.x, e.y, me.x, me.y) < 140) { this.show('heavy'); return; }
+    if (!H.flask && me.hp < me.maxHp * 0.45 && P.potions > 0) { this.show('flask'); return; }
+    if (!H.stamina && me.sta <= 0.5) { this.show('stamina'); return; }
+    if (!H.loot && w.loot.length) { this.show('loot'); return; }
+    if (!H.key && w.dun && w.dun.keys > 0) { this.show('key'); return; }
+    if (!H.cards && me.mana >= me.stats.maxMana && [...w.ents.values()].some(e => e.type === 'enemy' && e.state !== 'spawn')) { this._cardT = (this._cardT || 0) + dt; if (this._cardT > 8) this.show('cards'); }
+    if (!H.stats && P.pts > 0) this.show('stats');
+  },
+};
+
+// ---- 14_padnav.js ----
+// ============================================================================
+//  Gamepad menu navigation: d-pad / left stick move a highlighted focus between
+//  buttons, tabs, item cells and cards; A selects, B goes back, Start closes.
+// ============================================================================
+const PadNav = {
+  focus: null, prev: [], repeatT: 0, held: null,
+  active() { return G.scene === 'title' || !!G.menu || !!document.getElementById('confirm-box') || (Story.active && Story.modal); },
+  root() { return document.getElementById('confirm-box') || document.querySelector('#menu-root .panel') || document.getElementById('title-wrap'); },
+  items() {
+    const r = this.root(); if (!r) return [];
+    return [...r.querySelectorAll('button:not([disabled]), .tab, .cell, .card, .dun:not(.lock), .colors div, input[type=range]')].filter(el => el.offsetParent !== null && !el.closest('.hidden'));
+  },
+  // where focus starts: the first piece of content, not the tab strip or the Close button
+  first(items) {
+    return items.find(el => el.matches('.cell, .card, .dun')) || items.find(el => !el.matches('.tab') && !/Close|Back/.test(el.textContent)) || items[0] || null;
+  },
+  setFocus(el) {
+    if (this.focus) this.focus.classList.remove('padfocus');
+    this.focus = el; if (!el) return;
+    el.classList.add('padfocus'); el.scrollIntoView({ block: 'nearest' });
+    if (el.classList.contains('cell')) { const r = el.getBoundingClientRect(); el.dispatchEvent(new MouseEvent('mouseenter', { clientX: r.right, clientY: r.top })); } else hideTip();
+  },
+  move(dx, dy) {
+    const items = this.items(); if (!items.length) return;
+    if (!this.focus || !items.includes(this.focus)) { this.setFocus(this.first(items)); return; }
+    const c = this.focus.getBoundingClientRect(), cx = c.left + c.width / 2, cy = c.top + c.height / 2;
+    // prefer targets inside a cone around the pressed direction; anything else only as a fallback
+    let best = null, bs = 1e9;
+    for (const el of items) {
+      if (el === this.focus) continue;
+      const r = el.getBoundingClientRect(), ex = r.left + r.width / 2 - cx, ey = r.top + r.height / 2 - cy;
+      const along = ex * dx + ey * dy; if (along <= 4) continue;
+      const side = Math.abs(ex * dy - ey * dx), s = along + side * 2.5 + (side > along * 0.8 ? 5000 : 0);
+      if (s < bs) { bs = s; best = el; }
+    }
+    if (best) { this.setFocus(best); SFX.play('ui', 0.3, 1.2); }
+  },
+  activate() {
+    if (Story.active && Story.modal) { Story.advance(); return; }
+    const el = this.focus; if (!el || !el.isConnected) { this.move(1, 0); return; }
+    if (el.tagName === 'INPUT') return;
+    el.click();
+    // menus rebuild themselves after most clicks: re-find a sensible focus next frame
+    setTimeout(() => { if (!this.focus || !this.focus.isConnected) this.setFocus(this.first(this.items())); }, 30);
+  },
+  back() {
+    const cb = document.getElementById('confirm-box');
+    if (cb) { const c = [...cb.querySelectorAll('button')].find(b => b.textContent === 'Cancel'); c && c.click(); return; }
+    if (Story.active && Story.modal) { Story.skip(); return; }
+    if (G.menu && G.menu !== 'endroll' && G.menu !== 'newgame') { closeMenu(); SFX.play('uiBack'); return; }
+    if (G.menu === 'newgame') { openSlots('play'); }
+  },
+  adjust(dir) { const el = this.focus; if (el && el.tagName === 'INPUT') { el.value = Number(el.value) + dir * Number(el.step || 0.05); el.dispatchEvent(new Event('input')); return true; } return false; },
+  // called from Input.pollPad while a menu or dialogue is open
+  update(gp) {
+    const pressed = (i) => !!(gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > 0.5));
+    const edge = (i) => pressed(i) && !this.prev[i];
+    const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
+    let dir = null;
+    if (pressed(12) || ay < -0.6) dir = [0, -1]; else if (pressed(13) || ay > 0.6) dir = [0, 1];
+    else if (pressed(14) || ax < -0.6) dir = [-1, 0]; else if (pressed(15) || ax > 0.6) dir = [1, 0];
+    const key = dir ? dir.join() : null, now = performance.now();
+    if (key && (key !== this.held || now > this.repeatT)) {
+      if (!(dir[0] && this.adjust(dir[0]))) this.move(dir[0], dir[1]);
+      this.repeatT = now + (key !== this.held ? 380 : 140);
+    }
+    this.held = key;
+    if (edge(0)) this.activate();
+    if (edge(1)) this.back();
+    if (edge(9) && G.menu && G.menu !== 'endroll') closeMenu();
+    // shoulder buttons flip pause-menu tabs
+    if ((edge(4) || edge(5)) && G.menu === 'pause') { const ids = PAUSE_TABS.map(t => t[0]); const i = ids.indexOf(UI.pauseTab); UI.pauseTab = ids[(i + (edge(5) ? 1 : ids.length - 1)) % ids.length]; refreshMenu(); this.setFocus(null); }
+    for (let i = 0; i < gp.buttons.length; i++) this.prev[i] = pressed(i);
+    if (this.focus && !this.focus.isConnected) this.focus = null;
+  },
+};
 
 </script>
 </body>

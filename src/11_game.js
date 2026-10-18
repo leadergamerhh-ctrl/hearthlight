@@ -121,14 +121,6 @@ function enterDungeon(did, tier, seed) {
   Music.play(D.music);
   banner(D.name, TIERS[tier].name + (Net.partySize() > 1 ? ` · Party of ${Net.partySize()}` : ''), '', 3);
   storyOnDungeon(did);
-  if (!P.flags.tutDone) {
-    P.flags.tutDone = true;
-    const tips = ['Enemies <b style="color:#ff6b5e">glow red</b> before they strike. <b>Space</b> rolls — you are invulnerable for most of the roll.',
-      'Red zones fill from the centre. The hit lands the instant the fill reaches the edge.',
-      'Hold <b>Shift</b> to block. Block just as a blow lands to <b>parry</b>. <b>Right-click</b> heavies shatter shields.',
-      '<b>1–4</b> cast your ability cards (mana regenerates, melee hits restore it). <b>Q</b> drinks a flask.'];
-    tips.forEach((t, i) => setTimeout(() => { if (G.scene === 'dungeon') toast(t, '', 6); }, 3500 + i * 6500));
-  }
   saveGame();
 }
 function hostStartDungeon(did, tier) {
@@ -628,6 +620,7 @@ function frameBody() {
   updateFx(G.paused ? 0 : (Net.role === 'solo' && G.hitstop > 0 ? dt * 0.15 : dt));
   if (G.cine > 0) G.cine -= dt;
   Story.update(dt);
+  if (G.scene !== 'title') Hints.update(dt);
   if (!G.paused) ambientFx(dt);
   // mouse -> world
   Input.wx = Input.mx / R.S + G.cam.x - R.W / 2; Input.wy = Input.my / R.S + G.cam.y - R.H / 2;
@@ -673,6 +666,7 @@ function boot() {
   loadSettings();
   Sprites.init();
   Story.init();
+  Hints.init();
   initRender();
   Input.init(R.cv);
   $('chatin').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); closeChat(true); } else if (e.key === 'Escape') { e.preventDefault(); closeChat(false); } e.stopPropagation(); });

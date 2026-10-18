@@ -54,6 +54,11 @@ const Input = {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const gp = [...pads].find(p => p && p.connected); this.pad = gp || null;
     if (!gp) { this.padMove = [0, 0]; return; }
+    // menus, dialogue and the title screen get focus navigation instead of gameplay input
+    if (typeof PadNav !== 'undefined' && PadNav.active()) {
+      SFX.init(); PadNav.update(gp); this.padPrev = PadNav.prev.slice();
+      this.padMove = [0, 0]; this.padBlock = false; this.padUsedT = nowSec(); return;
+    }
     const dz = (v) => Math.abs(v) < 0.22 ? 0 : v;
     let mx = dz(gp.axes[0] || 0), my = dz(gp.axes[1] || 0);
     const l = Math.hypot(mx, my); this.padMove = l > 0 ? [mx / Math.max(1, l), my / Math.max(1, l)] : [0, 0];
@@ -73,6 +78,7 @@ const Input = {
       this.padPrev[i] = down;
     });
     this.padBlock = !!(gp.buttons[5] && gp.buttons[5].pressed);
+    if (typeof PadNav !== 'undefined') PadNav.prev = this.padPrev.slice();
   },
   take(a, win = 0.16) { const t = this.buf[a]; if (t && nowSec() - t <= win) { this.buf[a] = 0; return true; } return false; },
   peek(a, win = 0.16) { const t = this.buf[a]; return t && nowSec() - t <= win; },

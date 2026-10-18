@@ -134,9 +134,10 @@ address (`ws://host:port` or `wss://tunnel-address`) into the Co-op screen's ser
 | Chat · Ping · "Help!" · "Thanks!" | Enter · G · H · T |
 | Mute | N |
 
-**Gamepad** (standard layout, for gameplay; menus use the mouse): left stick move, right stick aim,
-X light, Y heavy, A roll, B interact, RB block, LB flask, d-pad cards 1–4, LT/RT cards 5–6,
-Start menu, Back map.
+**Gamepad** (standard layout): left stick move, right stick aim, X light, Y heavy, A roll,
+B interact, RB block, LB flask, d-pad cards 1–4, LT/RT cards 5–6, Start menu, Back map.
+In menus the d-pad or stick moves the highlight, A selects, B goes back, LB/RB switch tabs,
+and left/right adjusts sliders. A advances story dialogue and B skips it.
 
 **Settings** (Tab → Settings): master/music/effects volume, mute, screen shake, glow (bloom) and
 damage numbers.
