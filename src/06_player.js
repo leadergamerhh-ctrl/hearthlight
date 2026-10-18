@@ -38,6 +38,7 @@ const Input = {
     cv.addEventListener('mousedown', (e) => {
       SFX.init();
       this.mouse[e.button] = true;
+      if (G.cutscene) { Story.advance(); return; }
       if (G.scene === 'title' || G.menu || G.paused) return;
       if (e.button === 0) this.buf.light = nowSec();
       if (e.button === 2) this.buf.heavy = nowSec();
@@ -100,7 +101,7 @@ function newProfile(name, color) {
     quests: { active: [], progress: {}, claimedDaily: {} },
     ach: {}, flags: { clears: {}, tiers: { crypt: 0 }, seenIntro: false },
     stats: { kills: 0, epics: 0, maxUpg: 0, deaths: 0, bounties: 0, parry: 0, revives: 0, coopClears: 0, nightmare: 0, playtime: 0, runs: 0 },
-    shopSeed: 1, created: Date.now(),
+    shopSeed: 1, created: Date.now(), story: { on: true, seen: {}, lore: [] },
   };
   P.equip.weapon = genItem(1, { slot: 'weapon', type: 'sword', rarity: 'common' }); P.equip.weapon.name = 'Traveler\'s Sword';
   P.equip.armor = genItem(1, { slot: 'armor', type: 'leather', rarity: 'common' }); P.equip.armor.name = 'Worn Leathers';
@@ -183,10 +184,10 @@ function updateLocalPlayer(p, w, dt) {
   if (p.dead) { p.state = 'dead'; return; }
   if (p.downed) { updateDowned(p, w, dt); return; }
 
-  const [mx, my] = (G.menu || G.chatting) ? [0, 0] : Input.moveVec();
+  const [mx, my] = (G.menu || G.chatting || G.cutscene) ? [0, 0] : Input.moveVec();
   const moving = mx || my;
   if (moving && (p.state === 'idle' || p.state === 'move')) p.face = Math.atan2(my, mx);
-  p.aim = (G.menu || G.chatting) ? p.aim : aimAngle(p);
+  p.aim = (G.menu || G.chatting || G.cutscene) ? p.aim : aimAngle(p);
   let spd = 92 * S.speed * (p.buffs.haste ? 1.2 : 1);
   if (w.map && tileAt(w.map, Math.floor(p.x / TS), Math.floor(p.y / TS)) === T.WATER) spd *= 0.7;
   let tvx = mx * spd, tvy = my * spd, ctrl = 22;
@@ -275,7 +276,7 @@ function updateLocalPlayer(p, w, dt) {
     }
   }
   // ---- start new actions from idle/move ----
-  if (canAct(p) && !G.menu && !G.chatting) {
+  if (canAct(p) && !G.menu && !G.chatting && !G.cutscene) {
     if (Input.peek('roll')) tryRoll(p, mx, my);
     else if (Input.take('light')) startAttack(p, false, p.comboT > 0 ? (p.combo + 1) % 3 : 0);
     else if (Input.take('heavy')) startAttack(p, true, 0);

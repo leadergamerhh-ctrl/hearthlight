@@ -45,6 +45,17 @@ The repository includes `render.yaml`, so Render can set everything up:
 New commits to `main` redeploy automatically. The server caps open games at 500, limits how many
 messages each connection may send, and keeps no data on disk.
 
+## Story mode
+
+New heroes start in **Story** mode (or pick **Free play** on the new-game screen). The tale of the
+Ember Heart runs across five chapters: the prologue at the dying Hearth, one chapter per guardian
+(the Hollow King, the Thornmother, the Tidewyrm), and a finale in a fourth dungeon unlocked by
+recovering all three shards, **The Hollow Below**, against **The Pale Sovereign**. It has cutscenes
+with portraits, an on-screen objective, chapter-aware village dialogue, 16 lore stones to find in
+the dungeons, an epilogue and credits. **Tab → Story** shows chapters, collected lore and the current
+objective, and can turn story mode on for older saves (finished chapters count as done).
+In co-op, dungeon dialogue plays as subtitles that never pause the party.
+
 ## Play solo (no server needed)
 
 Double-click `index.html` (or open it in Chrome, Edge or Firefox). Choose **Play**, make a hero, and go.

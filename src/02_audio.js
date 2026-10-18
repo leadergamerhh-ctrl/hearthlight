@@ -162,6 +162,7 @@ const Music = (() => {
     crypt: { bpm: 60, root: 38, scale: [0, 1, 3, 5, 7, 8, 10], prog: [0, 1, 0, 6], pad: 1, arp: .25, bell: .6, bass: .7, drum: .15, arpPat: [0, 4, 2, 4] },
     forest: { bpm: 70, root: 43, scale: [0, 2, 3, 5, 7, 9, 10], prog: [0, 6, 5, 3], pad: .8, arp: .55, bell: .5, bass: .6, drum: .2, arpPat: [0, 4, 2, 5, 4, 2] },
     cave: { bpm: 56, root: 40, scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 6, 4], pad: 1, arp: .2, bell: .75, bass: .6, drum: .1, arpPat: [0, 4, 7, 4] },
+    abyss: { bpm: 52, root: 37, scale: [0, 1, 3, 5, 6, 8, 10], prog: [0, 1, 4, 1], pad: 1.1, arp: 0.15, bell: 0.9, bass: 0.8, drum: 0.08, arpPat: [0, 4, 6, 4] },
     combat: { bpm: 112, root: 40, scale: [0, 1, 3, 5, 7, 8, 10], prog: [0, 0, 5, 6], pad: .5, arp: .7, bell: .1, bass: 1, drum: .8, arpPat: [0, 0, 4, 0, 2, 0, 4, 6] },
     boss: { bpm: 136, root: 38, scale: [0, 2, 3, 5, 7, 8, 11], prog: [0, 0, 5, 4, 0, 0, 1, 4], pad: .6, arp: .9, bell: .1, bass: 1.1, drum: 1, arpPat: [0, 2, 4, 2, 0, 2, 5, 4], boss: true },
     victory: { bpm: 90, root: 48, scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 3, 4, 0], pad: .8, arp: 1, bell: .6, bass: .6, drum: .3, arpPat: [0, 2, 4, 7, 4, 2, 4, 7] },

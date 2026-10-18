@@ -165,6 +165,7 @@ const BIOME_ENEMIES = {
   crypt:  { grunt: 'Restless Bones', archer: 'Bone Archer', shield: 'Crypt Warden', flanker: 'Grave Rat', caster: 'Hollow Acolyte', elite: 'The Gravewarden' },
   forest: { grunt: 'Thornling', archer: 'Bramble Stalker', shield: 'Bark Golem', flanker: 'Feral Wolf', caster: 'Spore Witch', elite: 'Old Rootbeast' },
   cave:   { grunt: 'Drowned Thrall', archer: 'Reef Spitter', shield: 'Shellguard', flanker: 'Reef Crawler', caster: 'Tide Priest', elite: 'The Deep Brute' },
+  abyss:  { grunt: 'Pale Husk', archer: 'Frostbow Wraith', shield: 'Rime Knight', flanker: 'Shade Hound', caster: 'Hollow Cantor', elite: 'The Last Warden' },
 };
 
 const BOSSES = {
@@ -192,10 +193,17 @@ const BOSSES = {
       { at: 0.3, moves: { dive: 2, wave: 2, beam: 2, ring: 2, summon: 1 }, speed: 1.25, msg: 'Lightning crackles across the Tidewyrm!' },
     ], summon: 'flanker',
   },
+  sovereign: {
+    name: 'The Pale Sovereign', sub: 'Devourer of the Hearth', hp: 2900, r: 17, speed: 48, dmg: 33, poise: 9999, xp: 2200,
+    phases: [
+      { at: 1.0, moves: { combo: 3, fan: 2, roots: 2, dive: 1 }, speed: 1 },
+      { at: 0.6, moves: { combo: 2, slam: 2, rain: 2, wave: 2, ring: 2, summon: 1 }, speed: 1.12, msg: 'The Sovereign drinks the dark and grows!' },
+      { at: 0.3, moves: { delayslam: 2, beam: 2, leap: 2, ring: 2, roots: 2 }, speed: 1.3, msg: '"Your little fire will gutter out!"' },
+    ], summon: 'grunt',
+  },
 };
 
-const DUNGEONS = {
-  crypt: {
+const DUNGEONS = {  crypt: {
     name: 'The Sunken Crypt', short: 'Crypt', blurb: 'Bone-choked halls beneath the old chapel. The dead do not rest here.', level: 1, boss: 'hollowking', mat: 'bone', music: 'crypt',
     pool: ['grunt', 'grunt', 'archer', 'flanker', 'shield', 'caster'], card: 'frostnova', unlockAfter: null,
     pal: { floor: '#2a2135', floor2: '#30263d', floorLine: '#1c1526', wall: '#3b2f4d', wallTop: '#191222', wallLine: '#271d34', accent: '#5d4a78', ambient: '#1a1028', fog: '#2b1840', torch: '#ff9a3c' },
@@ -210,9 +218,14 @@ const DUNGEONS = {
     pool: ['grunt', 'archer', 'archer', 'flanker', 'shield', 'caster'], card: 'meteor', unlockAfter: 'forest',
     pal: { floor: '#1d2a33', floor2: '#22323d', floorLine: '#141e25', wall: '#2c3f4c', wallTop: '#0e161c', wallLine: '#1d2b35', accent: '#3fb7c1', ambient: '#0c1824', fog: '#123040', torch: '#7fe8ff' },
   },
+  abyss: {
+    name: 'The Hollow Below', short: 'Hollow', blurb: 'A frozen wound beneath the sea floor, where light goes to die. The Pale Sovereign waits at the bottom.', level: 15, boss: 'sovereign', mat: 'ember', music: 'abyss',
+    pool: ['grunt', 'archer', 'shield', 'flanker', 'caster', 'caster'], card: 'spiritblades', unlockAfter: null,
+    unlockReq: p => p.flags.clears.crypt && p.flags.clears.forest && p.flags.clears.cave, lockText: 'Locked: recover all three shards of the Ember Heart first.',
+    pal: { floor: '#1e1c28', floor2: '#24212f', floorLine: '#110f18', wall: '#2c2838', wallTop: '#0c0a12', wallLine: '#1b1825', accent: '#a8c8ff', ambient: '#0e0c1a', fog: '#1a1830', torch: '#9fc8ff' },
+  },
 };
-const TIERS = [
-  { name: 'Normal', lvl: 0, hp: 1, dmg: 1, luck: 0 },
+const TIERS = [  { name: 'Normal', lvl: 0, hp: 1, dmg: 1, luck: 0 },
   { name: 'Veteran', lvl: 4, hp: 1.6, dmg: 1.35, luck: 0.05 },
   { name: 'Nightmare', lvl: 9, hp: 2.6, dmg: 1.8, luck: 0.12 },
 ];
@@ -228,6 +241,7 @@ const VILLAGE_UNLOCKS = [
   { id: 'tavern', name: 'The Ember Mug Tavern', req: p => p.flags.clears.forest, hint: 'Defeat the Thornmother' },
   { id: 'lanterns', name: 'Lantern Road', req: p => (p.stats.bounties || 0) >= 3, hint: 'Complete 3 bounties' },
   { id: 'monument', name: 'Monument of the Hearth', req: p => p.flags.clears.cave, hint: 'Defeat the Tidewyrm' },
+  { id: 'restored', name: 'The Hearth Restored', req: p => p.flags.clears.abyss, hint: 'Defeat the Pale Sovereign' },
 ];
 function villageRenown(p) { return VILLAGE_UNLOCKS.filter(u => u.req(p)).length; }
 
@@ -270,6 +284,9 @@ const ACHIEVEMENTS = [
   { id: 'coop', name: 'Fellowship', desc: 'Clear a dungeon with a friend.', test: p => (p.stats.coopClears || 0) >= 1 },
   { id: 'nightmare', name: 'Into the Nightmare', desc: 'Clear any dungeon on Nightmare.', test: p => (p.stats.nightmare || 0) >= 1 },
   { id: 'village', name: 'The Hearth Burns Bright', desc: 'Unlock every village building.', test: p => villageRenown(p) >= VILLAGE_UNLOCKS.length },
+  { id: 'sovereign', name: 'Hearthkeeper', desc: 'Defeat the Pale Sovereign.', test: p => p.flags.clears.abyss },
+  { id: 'story', name: 'The Long Night Ends', desc: 'Complete story mode.', test: p => p.story && p.story.seen && p.story.seen.epilogue },
+  { id: 'lore', name: 'Keeper of Memory', desc: 'Read every lore stone.', test: p => p.story && p.story.lore && p.story.lore.length >= 16 },
 ];
 
 const PLAYER_COLORS = ['#3fc9c0', '#ff8a3a', '#c56cff', '#ffd23f', '#5aa0ff', '#ff5a7a'];

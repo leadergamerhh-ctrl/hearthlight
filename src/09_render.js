@@ -35,6 +35,7 @@ function lightSprite(color) {
 function updateCamera(dt) {
   const w = G.world, me = G.me, cam = G.cam; if (!w || !me) return;
   let tx = me.x + Math.cos(me.aim) * 10, ty = me.y - 8 + Math.sin(me.aim) * 8;
+  if (G.camTarget) { tx = G.camTarget.x; ty = G.camTarget.y; }
   if (w.map.kind === 'dungeon') {
     const ri = roomIndexAt(w.map, me.x, me.y);
     // boss fights: frame both the hero and the boss
@@ -81,6 +82,7 @@ function render(alpha) {
   for (const d of w.map.decor) if (!d.flat && !d.wall && inView(d.x, d.y)) list.push({ y: d.y, f: () => drawSpr(ctx, SPR[d.spr], 0, d.x, d.y) });
   if (w.map.pots) for (const p of w.map.pots) if (!p.broken && inView(p.x, p.y)) list.push({ y: p.y, f: () => { shadowAt(ctx, p.x, p.y, 5); drawSpr(ctx, SPR['pot_' + w.map.biome] || SPR.pot_crypt, 0, p.x, p.y); } });
   if (w.map.chests) for (const c of w.map.chests) if (!c.hidden && inView(c.x, c.y)) list.push({ y: c.y, f: () => drawChest(ctx, c, w) });
+  if (w.map.stones) for (const s of w.map.stones) if (inView(s.x, s.y)) list.push({ y: s.y, f: () => { shadowAt(ctx, s.x, s.y, 7); drawSpr(ctx, SPR.memstone, s.read ? 0 : Math.floor(G.rt * 2.5) % 2, s.x, s.y); if (!s.read && Math.random() < 0.12) G.fx.parts.push(part(s.x + rnd(-4, 4), s.y - rnd(6, 18), 0, -14, '#bfe8ff', 0.8, 1, true)); } });
   for (const p of portalsOf(w)) if (inView(p.x, p.y, 60)) list.push({ y: p.y + 4, f: () => drawPortal(ctx, p) });
   if (w.npcs) for (const n of w.npcs) if (inView(n.x, n.y)) list.push({ y: n.y, f: () => drawNpc(ctx, n) });
   if (w.objects) for (const o of w.objects) if (inView(o.x, o.y, 60)) list.push({ y: o.y, f: () => { if (o.role === 'gate') drawGateSwirl(ctx, o); drawSpr(ctx, SPR[o.spr], 0, o.x, o.y); } });
@@ -110,7 +112,7 @@ function render(alpha) {
   for (const r of G.fx.rings) { const u = r.t / r.dur; ctx.globalAlpha = (1 - u) * 0.9; ctx.strokeStyle = r.c; ctx.lineWidth = Math.max(1, 4 * (1 - u)); ctx.beginPath(); ctx.ellipse(r.x, r.y, lerp(r.r0, r.r1, easeOut(u)), lerp(r.r0, r.r1, easeOut(u)) * 0.6, 0, 0, TAU); ctx.stroke(); }
   for (const p of G.fx.parts) if (p.glow) { ctx.globalAlpha = p.amb ? Math.sin(Math.PI * (1 - p.life / p.max)) * (0.5 + 0.5 * Math.sin(G.rt * 5 + p.x)) : clamp(p.life / p.max * 1.4, 0, 1); ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x - p.s / 2), Math.round(p.y - p.s / 2), p.s, p.s); }
   for (const pr of w.pprojs) drawPProjGlow(ctx, pr);
-  for (const pr of w.eprojs) { const el = now - pr.t0; if (el >= 0) { const x = pr.x0 + pr.vx * el, y = pr.y0 + pr.vy * el; ctx.globalAlpha = 0.5; ctx.drawImage(lightSprite(pr.kind === 'orb' ? '#9b6cff' : pr.kind === 'bubble' ? '#3fd0e0' : pr.kind === 'blade' ? '#8ff3ff' : pr.kind === 'thorn' ? '#9be86a' : '#ff9a5a'), x - 10, y - 10, 20, 20); } }
+  for (const pr of w.eprojs) { const el = now - pr.t0; if (el >= 0) { const x = pr.x0 + pr.vx * el, y = pr.y0 + pr.vy * el; ctx.globalAlpha = 0.5; ctx.drawImage(lightSprite(pr.kind === 'orb' ? '#9b6cff' : pr.kind === 'bubble' ? '#3fd0e0' : pr.kind === 'blade' ? '#8ff3ff' : pr.kind === 'thorn' ? '#9be86a' : pr.kind === 'shard' ? '#a8d8ff' : '#ff9a5a'), x - 10, y - 10, 20, 20); } }
   if (G.fx.zaps) for (const z of G.fx.zaps) drawZap(ctx, z);
   drawFlames(ctx, w, ox, oy);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -431,6 +433,7 @@ function drawEProj(ctx, x, y, pr) {
   else if (pr.kind === 'bubble') { ctx.strokeStyle = '#9ff8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, 4, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(63,208,224,.5)'; ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(-2, -2, 1, 1); }
   else if (pr.kind === 'blade') { ctx.fillStyle = '#8ff3ff'; ctx.fillRect(-5, -1, 10, 2); ctx.fillStyle = '#fff'; ctx.fillRect(1, -1, 4, 1); }
   else if (pr.kind === 'thorn') { ctx.fillStyle = '#6fae4f'; ctx.fillRect(-4, -1, 8, 2); ctx.fillStyle = '#c9d27a'; ctx.fillRect(3, -1, 2, 2); }
+  else if (pr.kind === 'shard') { ctx.fillStyle = '#a8d8ff'; ctx.fillRect(-5, -1, 9, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(1, 0, 4, 1); ctx.fillStyle = '#5a7ac8'; ctx.fillRect(-5, 1, 6, 1); }
   ctx.restore();
 }
 function drawPProj(ctx, pr) {

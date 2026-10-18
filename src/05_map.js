@@ -222,7 +222,7 @@ function genDungeon(did, tier, seed) {
     const nd = Math.floor(r.w * r.h / 28);
     for (let k = 0; k < nd; k++) {
       const x = rng.int(r.x0, r.x1), y = rng.int(r.y0, r.y1); if (get(x, y) !== T.FLOOR) continue;
-      const choices = did === 'crypt' ? ['bones', 'bones', 'grave'] : did === 'forest' ? ['bush', 'mushroom', 'rock', 'bush'] : ['crystal', 'rock', 'mushroom'];
+      const choices = did === 'crypt' ? ['bones', 'bones', 'grave'] : did === 'forest' ? ['bush', 'mushroom', 'rock', 'bush'] : did === 'abyss' ? ['crystal', 'bones', 'rock', 'grave'] : ['crystal', 'rock', 'mushroom'];
       const spr = rng.pick(choices);
       if (spr === 'grave' && (x === r.x0 || x === r.x1)) continue;
       map.decor.push({ spr, x: x * TS + 8 + rng.int(-3, 3), y: y * TS + 12, flat: spr === 'bones' });
@@ -256,7 +256,15 @@ function genDungeon(did, tier, seed) {
     // tile clear check guarantee: make sure pillars didn't seal a door (doors are on the perimeter, perimeter is clear)
   }
   map.decor = map.decor.filter(d => d.wall || d.spr === 'brazier' || !((map.rugs || []).some(rg => d.x > rg.x - 8 && d.x < rg.x + rg.w + 8 && d.y > rg.y - 4 && d.y < rg.y + rg.h + 12) || (map.arena && Math.hypot(d.x - map.arena.x, (d.y - map.arena.y) / 0.62) < map.arena.r + 10)));
-  map.pots = map.pots.filter(p => get(p.tx, p.ty) === T.FLOOR);
+  // memory stones: two lore stones in ordinary rooms
+  map.stones = [];
+  for (const r of rng.shuffle(rooms.filter(r => r.type === 'combat' || r.type === 'trap')).slice(0, 2)) {
+    const tx = r.x1 - 2, ty = r.y0 + 1;
+    if (get(tx, ty) !== T.FLOOR) continue;
+    map.stones.push({ x: tx * TS + 8, y: ty * TS + 14, room: r.i, read: false });
+    map.lights.push({ x: tx * TS + 8, y: ty * TS + 2, r: 46, color: '#8fc8ff', flicker: 0.2 });
+  }
+  map.pots = map.pots.filter(p => get(p.tx, p.ty) === T.FLOOR && !map.stones.some(s => Math.abs(s.x - p.x) < 14 && Math.abs(s.y - p.y) < 14));
   map.pots.forEach((p, i) => p.i = i);
   // keep walls next to floor; walls two above a floor become "upper faces"; everything else is void
   const t2 = new Uint8Array(t);

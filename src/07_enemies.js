@@ -425,7 +425,7 @@ const BOSS_MOVES = {
       if (at(e, t - 0.3) && p) faceTo(e, p, 0, TICK);
       if (at(e, t)) {
         sfxAt(e.bk === 'tidewyrm' ? 'orb' : 'arrow', e.x, e.y, 1);
-        const kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : 'thorn';
+        const kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : e.bk === 'sovereign' ? 'shard' : 'thorn';
         for (let i = 0; i < n; i++) { const a = e.aim + (i - (n - 1) / 2) * 0.2 + (v % 2 ? 0.1 : 0); spawnEProj(w, { kind, x: e.x, y: e.y - 16, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160, r: 4, dmg: Math.round(e.dmg * 0.75), life: 3 }); }
       }
     }
@@ -436,7 +436,7 @@ const BOSS_MOVES = {
     if (at(e, 0.0001)) spawnHazard(w, { shape: 'circle', owner: e.id, attach: true, x: e.x, y: e.y, r: 24, dmg: 0, tele: 0.6, act: 0, rune: true });
     for (let k = 0; k < waves; k++) {
       if (at(e, 0.6 + k * 0.55)) {
-        sfxAt('orb', e.x, e.y, 1); const off = rnd(0, TAU), kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : 'thorn';
+        sfxAt('orb', e.x, e.y, 1); const off = rnd(0, TAU), kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : e.bk === 'sovereign' ? 'shard' : 'thorn';
         for (let i = 0; i < n; i++) { if (i % 6 === 0) continue; const a = off + i * TAU / n; spawnEProj(w, { kind, x: e.x, y: e.y - 12, vx: Math.cos(a) * 120, vy: Math.sin(a) * 120, r: 4, dmg: Math.round(e.dmg * 0.7), life: 3.5 }); }
       }
     }

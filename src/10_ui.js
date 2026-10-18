@@ -54,6 +54,7 @@ function updateHUD(dt) {
     $('h-keys').innerHTML = w && w.dun ? `${w.dun.keys ? `<span style="color:#ffd34a">⚷</span> ×${w.dun.keys}` : ''} ${w.dun.bossKey ? '<span style="color:#e05aff">⚷ Boss Key</span>' : ''}` : '';
     $('h-pts').innerHTML = P.pts ? `<span style="color:var(--teal)">+${P.pts} stat point${P.pts > 1 ? 's' : ''} (C)</span>` : '';
     updateParty(); drawMinimap($('minimap'), false);
+    { const ob = storyObjective(P); $('objective').innerHTML = ob ? `<b>Objective</b>${esc(ob)}` : ''; }
     $('area-name').textContent = G.scene === 'village' ? 'Hearthlight Village' : w && w.dun ? `${DUNGEONS[w.dun.did].name} · ${TIERS[w.dun.tier].name}` : '';
   }
   // boss bar
@@ -92,6 +93,7 @@ function flashHotbar(i, kind) { const s = UI.slots[i]; if (!s) return; s.s.class
 //  Toasts, banners, chat, pickups
 // ---------------------------------------------------------------------------
 function toast(msg, cls = '', dur = 3) {
+  if (G.cutscene) { (UI.heldToasts = UI.heldToasts || []).push([msg, cls, dur]); return; } // shown after the scene
   const t = h('div', { class: 'toast ' + cls, html: msg }); $('toasts').appendChild(t);
   setTimeout(() => t.classList.add('out'), dur * 1000); setTimeout(() => t.remove(), dur * 1000 + 450);
   while ($('toasts').children.length > 4) $('toasts').firstChild.remove();
@@ -199,7 +201,7 @@ function emptyCell(label) { return h('div', { class: 'cell', style: { opacity: .
 // ---------------------------------------------------------------------------
 //  Pause menu (tabs)
 // ---------------------------------------------------------------------------
-const PAUSE_TABS = [['inv', 'Inventory'], ['char', 'Character'], ['cards', 'Cards'], ['quests', 'Bounties'], ['ach', 'Achievements'], ['map', 'Map'], ['party', 'Co-op'], ['settings', 'Settings'], ['game', 'Game']];
+const PAUSE_TABS = [['inv', 'Inventory'], ['char', 'Character'], ['cards', 'Cards'], ['story', 'Story'], ['quests', 'Bounties'], ['ach', 'Achievements'], ['map', 'Map'], ['party', 'Co-op'], ['settings', 'Settings'], ['game', 'Game']];
 function openPause(tab = 'inv') {
   UI.pauseTab = tab;
   openMenu('pause', (panel) => {
@@ -208,7 +210,7 @@ function openPause(tab = 'inv') {
     for (const [id, label] of PAUSE_TABS) tabs.appendChild(h('div', { class: 'tab' + (UI.pauseTab === id ? ' on' : ''), onclick: () => { SFX.play('ui'); UI.pauseTab = id; refreshMenu(); } }, label));
     panel.appendChild(tabs);
     const body = h('div'); panel.appendChild(body);
-    ({ inv: tabInventory, char: tabCharacter, cards: tabCards, quests: tabQuests, ach: tabAchievements, map: tabMap, party: tabParty, settings: tabSettings, game: tabGame })[UI.pauseTab](body);
+    ({ inv: tabInventory, char: tabCharacter, cards: tabCards, story: tabStory, quests: tabQuests, ach: tabAchievements, map: tabMap, party: tabParty, settings: tabSettings, game: tabGame })[UI.pauseTab](body);
     if (Net.role !== 'solo') panel.appendChild(h('div', { class: 'note', style: { marginTop: '10px' } }, 'Co-op: the world keeps running while this menu is open.'));
   });
 }
@@ -415,7 +417,7 @@ function openNpc(n) {
 function openElder() {
   const P = G.P, ren = villageRenown(P);
   openMenu('elder', (p) => {
-    npcHeader(p, 'Elder Hessa', `Keeper of the Hearth · Village renown ${ren}/${VILLAGE_UNLOCKS.length}`, pick(NPC_LINES.hessa));
+    npcHeader(p, 'Elder Hessa', `Keeper of the Hearth · Village renown ${ren}/${VILLAGE_UNLOCKS.length}`, npcLine('hessa'));
     p.appendChild(h('h3', {}, 'The village'));
     for (const u of VILLAGE_UNLOCKS) p.appendChild(h('div', { class: 'statrow' }, h('span', {}, u.name), u.req(P) ? h('b', { style: { color: 'var(--green)' } }, 'Built') : h('span', { class: 'note' }, u.hint)));
     p.appendChild(h('h3', {}, 'Advice'));
@@ -427,7 +429,7 @@ function openSmith() {
   const P = G.P; UI.smithTab = UI.smithTab || 'upgrade';
   openMenu('smith', (p) => {
     p.style.width = 'min(780px,94vw)';
-    npcHeader(p, 'Brann the Smith', 'Upgrades are permanent: +10% base stats per level, up to +' + MAX_UPG, pick(NPC_LINES.brann));
+    npcHeader(p, 'Brann the Smith', 'Upgrades are permanent: +10% base stats per level, up to +' + MAX_UPG, npcLine('brann'));
     p.appendChild(matsLine(P));
     const tabs = h('div', { class: 'tabs' }); for (const [id, l] of [['upgrade', 'Upgrade'], ['salvage', 'Salvage']]) tabs.appendChild(h('div', { class: 'tab' + (UI.smithTab === id ? ' on' : ''), onclick: () => { UI.smithTab = id; refreshMenu(); } }, l)); p.appendChild(tabs);
     const list = h('div', { class: 'list' });
@@ -456,7 +458,7 @@ function openShop() {
   const P = G.P; UI.shopTab = UI.shopTab || 'buy';
   openMenu('shop', (p) => {
     p.style.width = 'min(780px,94vw)';
-    npcHeader(p, 'Mira the Trader', 'New stock after every expedition.', pick(NPC_LINES.mira));
+    npcHeader(p, 'Mira the Trader', 'New stock after every expedition.', npcLine('mira'));
     p.appendChild(matsLine(P));
     const tabs = h('div', { class: 'tabs' }); for (const [id, l] of [['buy', 'Buy'], ['sell', 'Sell']]) tabs.appendChild(h('div', { class: 'tab' + (UI.shopTab === id ? ' on' : ''), onclick: () => { UI.shopTab = id; refreshMenu(); } }, l)); p.appendChild(tabs);
     const list = h('div', { class: 'list' });
@@ -521,7 +523,7 @@ function openArcanist() {
   const P = G.P;
   openMenu('arcanist', (p) => {
     p.style.width = 'min(820px,94vw)';
-    npcHeader(p, 'Vesh the Arcanist', 'Sells copies of cards she has studied.', pick(NPC_LINES.vesh));
+    npcHeader(p, 'Vesh the Arcanist', 'Sells copies of cards she has studied.', npcLine('vesh'));
     p.appendChild(matsLine(P));
     const notOwned = Object.keys(CARDS).filter(id => !P.cards.owned.includes(id));
     if (!notOwned.length) p.appendChild(h('div', { class: 'note' }, 'You own every card she knows. Impressive.'));
@@ -543,13 +545,13 @@ function openGate() {
     p.style.width = 'min(720px,94vw)';
     npcHeader(p, 'The Dungeon Gate', Net.role === 'host' ? `Your party (${Net.partySize()}) will travel with you. Enemies grow tougher with more heroes.` : 'Choose where the portal leads.');
     for (const [id, D] of Object.entries(DUNGEONS)) {
-      const unlocked = !D.unlockAfter || P.flags.clears[D.unlockAfter];
+      const unlocked = D.unlockReq ? D.unlockReq(P) : (!D.unlockAfter || P.flags.clears[D.unlockAfter]);
       const maxTier = P.flags.tiers[id] || 0, tier = Math.min(UI.gateTier[id] ?? 0, maxTier);
       const sw = h('canvas', { width: 16, height: 16, class: 'sw' });
       const x = sw.getContext('2d'); x.fillStyle = D.pal.floor; x.fillRect(0, 0, 16, 16); x.fillStyle = D.pal.wall; x.fillRect(0, 0, 16, 6); x.fillStyle = D.pal.accent; x.fillRect(6, 9, 4, 4); x.fillStyle = D.pal.torch; x.fillRect(3, 2, 2, 2);
       const tiers = h('div', { class: 'row', style: { marginTop: '6px' } }, ...TIERS.map((T, i) => h('button', { class: 'btn small' + (i === tier ? ' primary' : ''), disabled: i > maxTier ? 'disabled' : null, onclick: (e) => { e.stopPropagation(); UI.gateTier[id] = i; refreshMenu(); } }, T.name + (i > maxTier ? ' 🔒' : ''))));
       const el = h('div', { class: 'dun' + (unlocked ? '' : ' lock') }, sw,
-        h('div', { style: { flex: 1 } }, h('div', { class: 'dn' }, D.name, P.flags.clears[id] ? h('span', { class: 'pill ok' }, 'cleared') : null), h('div', { class: 'dd' }, unlocked ? D.blurb : `Locked — defeat the boss of ${DUNGEONS[D.unlockAfter].name} first.`), h('div', { class: 'note' }, `Recommended level ${D.level + TIERS[tier].lvl} · Drops ${MATERIALS[D.mat].name}`), unlocked ? tiers : null),
+        h('div', { style: { flex: 1 } }, h('div', { class: 'dn' }, D.name, P.flags.clears[id] ? h('span', { class: 'pill ok' }, 'cleared') : null), h('div', { class: 'dd' }, unlocked ? D.blurb : (D.lockText || `Locked: defeat the boss of ${DUNGEONS[D.unlockAfter].name} first.`)), h('div', { class: 'note' }, `Recommended level ${D.level + TIERS[tier].lvl} · Drops ${MATERIALS[D.mat].name}`), unlocked ? tiers : null),
         unlocked ? btn('Enter', () => { closeMenu(); hostStartDungeon(id, tier); }, 'primary') : null);
       p.appendChild(el);
     }
@@ -600,9 +602,13 @@ function newGameDialog(slot, mode) {
     for (const c of PLAYER_COLORS) { const d = h('div', { style: { background: c }, class: c === color ? 'on' : '' }); d.onclick = () => { color = c; cols.querySelectorAll('div').forEach(x => x.classList.remove('on')); d.classList.add('on'); prev(); }; cols.appendChild(d); }
     const pv = h('canvas', { width: 24, height: 32, style: { width: '72px', height: '96px', imageRendering: 'pixelated' } });
     const prev = () => { const x = pv.getContext('2d'); x.clearRect(0, 0, 24, 32); x.drawImage(playerSprite(color).frames[0], 0, 0); };
-    p.appendChild(h('div', { class: 'row', style: { gap: '20px' } }, pv, h('div', { class: 'col' }, h('div', { class: 'note' }, 'Name'), name, h('div', { class: 'note' }, 'Colour'), cols)));
+    let storyOn = true;
+    const modeRow = h('div', { class: 'row' });
+    const drawMode = () => { modeRow.innerHTML = ''; modeRow.appendChild(btn('Story', () => { storyOn = true; drawMode(); }, storyOn ? 'primary small' : 'small')); modeRow.appendChild(btn('Free play', () => { storyOn = false; drawMode(); }, storyOn ? 'small' : 'primary small')); };
+    drawMode();
+    p.appendChild(h('div', { class: 'row', style: { gap: '20px' } }, pv, h('div', { class: 'col' }, h('div', { class: 'note' }, 'Name'), name, h('div', { class: 'note' }, 'Colour'), cols, h('div', { class: 'note' }, 'Mode'), modeRow, h('div', { class: 'note', style: { maxWidth: '300px' } }, 'Story adds cutscenes, guardian dialogue and the tale of the Ember Heart. Free play skips them. You can switch later in the Story tab.'))));
     prev();
-    p.appendChild(h('div', { style: { marginTop: '16px' } }, btn('Begin', () => { const n = name.value.trim().slice(0, 14) || 'Wanderer'; const P = newProfile(n, color); writeSave(slot, P); closeMenu(); startGame(slot, mode); }, 'primary'), btn('Back', () => openSlots(mode))));
+    p.appendChild(h('div', { style: { marginTop: '16px' } }, btn('Begin', () => { const n = name.value.trim().slice(0, 14) || 'Wanderer'; const P = newProfile(n, color); P.story.on = storyOn; writeSave(slot, P); closeMenu(); startGame(slot, mode); }, 'primary'), btn('Back', () => openSlots(mode))));
     setTimeout(() => name.focus(), 50);
   }, { pause: false });
 }

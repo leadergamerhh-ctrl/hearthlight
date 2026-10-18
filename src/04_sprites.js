@@ -452,9 +452,42 @@ function bossTidewyrm() {
   }, { ax: 35, ay: 63 });
 }
 
+// The Pale Sovereign: a fallen star in a ragged robe of frost, crowned in icicles (58x70)
+function bossSovereign() {
+  return makeSpr('sovereign', 60, 72, 5, (P, f) => {
+    const { E, L } = bossKit(P);
+    const back = f === 4, wf = back ? 0 : f, by = [0, -1, -2, -1][wf], sway = [0, 1, 0, -1][wf];
+    const robe = '#d8e0f0', robe2 = '#9aa8c8', robe3 = '#5a6488', void_ = '#0a0814', ice = '#bfe8ff', iceL = '#ffffff', glow = '#a8d8ff';
+    const Q = (x, y, w, h, c) => P(x, y + by, w, h, c);
+    // floating ice fragments around it
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + wf * 0.4, rx = 30 + Math.cos(a) * 26, ry = 40 + Math.sin(a) * 10; P(Math.round(rx), Math.round(ry + by), 2, 3, i % 2 ? ice : robe2); }
+    // long ragged robe, hovering (no feet)
+    Q(17, 22, 26, 22, robe2); Q(14, 34, 32, 16, robe2); Q(11, 46, 38, 12, robe3);
+    for (let i = 0; i < 10; i++) Q(11 + i * 4 + (i % 2 ? sway : 0), 58, 3, 3 + ((i + wf) % 3), robe3);
+    Q(19, 22, 22, 30, robe); Q(26, 22, 8, 34, robe2); Q(19, 22, 22, 2, '#ffffff');
+    if (!back) { Q(27, 26, 6, 26, void_); for (let i = 0; i < 5; i++) Q(29, 28 + i * 5, 2, 2, glow); } // a rift of starless dark down its chest
+    // long arms ending in claws
+    const aw = [0, 1, 0, -1][wf];
+    L(17, 25, 6, 40 + aw, robe2, 5); L(43, 25, 54, 40 - aw, robe2, 5);
+    for (const [hx, hy, dir] of [[6, 41 + aw, -1], [54, 41 - aw, 1]]) { for (let k = 0; k < 3; k++) L(hx, hy, hx + dir * (2 + k), hy + 6 + k, ice, 1); P(hx - 2, hy - 1, 4, 3, robe); }
+    // shoulders
+    E(18, 22, 6, 4, robe); E(42, 22, 6, 4, robe);
+    // hooded head with a single cold light
+    E(30, 13, 9, 10, robe); Q(21, 12, 18, 12, robe); Q(22, 5, 16, 2, robe2);
+    if (!back) { E(30, 15, 6, 7, void_); P(29, 13 + by, 3, 3, glow); P(30, 14 + by, 1, 1, iceL); }
+    // crown of icicles
+    for (let i = 0; i < 7; i++) { const x = 20 + i * 3.3, hgt = 4 + (i === 3 ? 6 : i % 2 ? 2 : 4); L(Math.round(x), 6 + by, Math.round(x), 6 + by - hgt, i === 3 ? iceL : ice, 2); }
+  }, { ax: 30, ay: 64 });
+}
+
 // --------------------------- props -----------------------------------------
 function buildProps() {
-  makeSpr('chest', 16, 14, 2, (P, f) => {
+  // memory stone: a standing stone with pale glowing runes (lore)
+  makeSpr('memstone', 14, 24, 2, (P, f) => {
+    const s = '#5a6078', s2 = '#3a3e54', g = f ? '#d8f0ff' : '#8fc8ff';
+    P(3, 2, 8, 20, s); P(2, 5, 10, 17, s); P(4, 1, 6, 1, s); P(10, 5, 2, 17, s2); P(2, 20, 11, 3, s2);
+    P(6, 5, 2, 1, g); P(5, 7, 1, 3, g); P(8, 8, 1, 2, g); P(6, 11, 3, 1, g); P(6, 14, 1, 3, g); P(8, 15, 1, 1, g); P(5, 18, 4, 1, g);
+  }, { ax: 7, ay: 22 });  makeSpr('chest', 16, 14, 2, (P, f) => {
     const w = '#7a4a26', w2 = '#4f2e17', g = '#f0b752';
     if (f === 0) { P(1, 4, 14, 9, w); P(1, 4, 14, 3, shade(w, 1.2)); P(1, 7, 14, 1, w2); P(1, 4, 2, 9, g); P(13, 4, 2, 9, g); P(7, 6, 2, 3, g); P(7, 8, 2, 1, INK); }
     else { P(1, 7, 14, 6, w); P(1, 2, 14, 4, w2); P(2, 6, 12, 2, '#ffe9a0'); P(1, 7, 2, 6, g); P(13, 7, 2, 6, g); P(1, 2, 14, 1, shade(w, 1.2)); }
@@ -466,7 +499,7 @@ function buildProps() {
   }, { ax: 11, ay: 16 });
   makeSpr('key', 9, 13, 1, (P) => { const g = '#ffd34a'; P(2, 0, 5, 5, g); P(3, 1, 3, 3, INK); P(4, 5, 1, 7, g); P(5, 8, 2, 1, g); P(5, 10, 2, 1, g); P(3, 0, 3, 1, '#fff2a0'); }, { ax: 4, ay: 12 });
   makeSpr('bosskey', 11, 15, 1, (P) => { const g = '#e05aff'; P(2, 0, 7, 7, g); P(4, 2, 3, 3, INK); P(5, 7, 1, 7, g); P(6, 10, 3, 1, g); P(6, 12, 3, 1, g); P(3, 0, 5, 1, '#ffc2ff'); P(5, 3, 1, 1, '#ffef6a'); }, { ax: 5, ay: 14 });
-  for (const [k, c] of [['crypt', '#8a7a9a'], ['forest', '#8a6a3a'], ['cave', '#4a8a9a'], ['village', '#b0703a']]) {
+  for (const [k, c] of [['crypt', '#8a7a9a'], ['forest', '#8a6a3a'], ['cave', '#4a8a9a'], ['village', '#b0703a'], ['abyss', '#8a94b0']]) {
     makeSpr('pot_' + k, 12, 13, 1, (P) => { P(3, 0, 6, 2, shade(c, 0.7)); P(2, 2, 8, 2, c); P(1, 4, 10, 7, c); P(2, 11, 8, 1, shade(c, 0.7)); P(2, 5, 8, 1, shade(c, 1.3)); P(8, 4, 2, 6, shade(c, 0.75)); P(3, 7, 6, 1, shade(c, 0.8)); }, { ax: 6, ay: 12 });
   }
   makeSpr('barrel', 12, 14, 1, (P) => { const w = '#7a4f2a'; P(1, 1, 10, 12, w); P(1, 1, 10, 2, shade(w, 1.25)); P(1, 4, 10, 1, '#3a3a44'); P(1, 10, 10, 1, '#3a3a44'); P(8, 2, 2, 10, shade(w, 0.75)); }, { ax: 6, ay: 13 });
@@ -557,8 +590,14 @@ function buildCharacters() {
   humanoid('npc_bard', { skin: '#e0b089', body: '#2a6a4a', hair: '#c86a2a', hat: '#2a4a3a', feather: '#e84a4a', legs: '#5a4a3a', boots: '#3a2a1a', strap: '#8a5a2a', collarScarf: '#d8b04a' });
   const vc = [['#7a5a3a', '#4a3a2a', '#d8a07a'], ['#3a5a7a', '#2a2a3a', '#c88a6a'], ['#7a3a3a', '#6a4a2a', '#e0b89a'], ['#5a6a3a', '#2a1e18', '#a07050']];
   vc.forEach(([b, hair, s], i) => humanoid('villager' + i, { skin: s, body: b, hair, legs: shade(b, .6), boots: '#2a1e18', longHair: i % 2 === 1, apron: i === 2 ? '#d8c8a8' : null, pouch: i === 0 ? '#6a4a2a' : null, collarScarf: i === 3 ? '#c86a2a' : null }));
-  bossHollowKing(); bossThornmother(); bossTidewyrm();
-}
+  // the Hollow Below: pale, frost-bitten things
+  humanoid('abyss_grunt', { skin: '#c8d4e8', skel: true, body: '#3a4058', boots: '#2a3048', eyes: '#a8d8ff', helmet: '#8a98b8' });
+  humanoid('abyss_archer', { skin: '#b8c8e0', body: '#2a3048', hood: '#d8e0f0', faceDark: true, eyes: '#a8d8ff', legs: '#3a4058', boots: '#1a1e30', cape: '#8a98b8' });
+  humanoid('abyss_shield', { skin: '#a8b8d0', body: '#4a5470', body2: '#343c58', helm: '#c8d4e8', eyes: '#a8d8ff', pauldron: '#e0e8f8', legs: '#343c58', boots: '#1a1e30', plume: '#a8d8ff', chest: '#7a8ab0', glove: '#c8d4e8' });
+  quad('abyss_flanker', { body: '#3a3a58', eye: '#a8d8ff', tail: '#5a5a80', snout: '#2a2a40', ear: '#5a5a80', spikes: '#c8e0ff' });
+  caster('abyss_caster', { robe: '#c8d0e8', hood: '#e0e8f8', trim: '#5a7ac8', eyes: '#a8d8ff', hand: '#a8d8ff' });
+  brute('abyss_elite', { body: '#3a4058', metal: '#a8b4d0', skin: '#c8d4e8', eyes: '#a8d8ff', horn: '#e0f0ff', belt: '#2a3048', emblem: '#a8d8ff' });
+  bossHollowKing(); bossThornmother(); bossTidewyrm(); bossSovereign();}
 const _playerSprCache = {};
 function playerSprite(color) {
   if (_playerSprCache[color]) return _playerSprCache[color];

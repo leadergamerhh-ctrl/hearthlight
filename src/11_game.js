@@ -22,6 +22,8 @@ function loadSettings() {
   try { const s = JSON.parse(lsGet('hl_settings') || 'null'); if (s) { Object.assign(SFX.settings, s.audio || {}); Object.assign(G.settings, s.game || {}); } } catch (e) { }
 }
 function migrate(P) { // keep older saves loadable
+  if (!P.story) P.story = { on: false, seen: {}, lore: [] }; // saves from before story mode start in free play
+  P.story.seen = P.story.seen || {}; P.story.lore = P.story.lore || [];
   const base = newProfile(P.name, P.color);
   for (const k in base) if (P[k] === undefined) P[k] = base[k];
   for (const k in base.stats) if (P.stats[k] === undefined) P.stats[k] = 0;
@@ -87,7 +89,8 @@ function enterVillage(first, victory) {
   const sp = map.spawn; placeMe(w, sp.x + (Net.pid % 2 ? 14 : -14) * (Net.pid ? 1 : 0), sp.y + (Net.pid > 1 ? 12 : 0));
   showHUD(true); buildHotbar();
   Music.play('village');
-  if (first && !P.flags.seenIntro) {
+  if (P.story && P.story.on) { P.flags.seenIntro = true; if (first && P.story.seen.prologue) banner('Hearthlight', 'Welcome back, ' + P.name, '', 2.2); storyOnVillage(); }
+  else if (first && !P.flags.seenIntro) {
     P.flags.seenIntro = true;
     setTimeout(() => { banner('Hearthlight', 'The last fire in a darkening land', '', 3.5); }, 400);
     setTimeout(() => toast('Talk to <b>Elder Hessa</b> by the fire, then take the <b>Dungeon Gate</b> to the north.', '', 7), 3800);
@@ -117,6 +120,7 @@ function enterDungeon(did, tier, seed) {
   showHUD(true); buildHotbar();
   Music.play(D.music);
   banner(D.name, TIERS[tier].name + (Net.partySize() > 1 ? ` · Party of ${Net.partySize()}` : ''), '', 3);
+  storyOnDungeon(did);
   if (!P.flags.tutDone) {
     P.flags.tutDone = true;
     const tips = ['Enemies <b style="color:#ff6b5e">glow red</b> before they strike. <b>Space</b> rolls — you are invulnerable for most of the roll.',
@@ -440,11 +444,12 @@ function onTeleport(m) {
 }
 function onBossEvent(d) {
   const w = G.world, P = G.P;
-  if (d.ev === 'intro') { const B = BOSSES[d.bk]; Music.play('boss'); G.cine = 2.6; setTimeout(() => banner(B.name, B.sub, '', 3), 200); shake(6); SFX.play('roar', 1); }
+  if (d.ev === 'intro') { const B = BOSSES[d.bk]; Music.play('boss'); G.cine = 2.6; setTimeout(() => banner(B.name, B.sub, '', 3), 200); shake(6); SFX.play('roar', 1); setTimeout(() => storyOnBoss('intro', d.bk), 1400); }
   if (d.ev === 'phase') { shake(10); G.flashScreen = 0.4; if (d.msg) banner(d.msg, '', '', 2.2); SFX.play('roar', 1); }
   if (d.ev === 'dying') { G.slowmo = 1.4; G.flashScreen = 0.6; shake(12); }
   if (d.ev === 'dead') {
     w.dun.bossDead = true; w.dun.portal = d.portal; w.dun.bossId = 0;
+    storyOnBoss('dead', d.bk);
     Music.play('victory'); shake(14); G.flashScreen = 0.8;
     deathFx(d.x, d.y, w.dun.did, true); burstFx(d.x, d.y - 10, ['#ffd76a', '#fff', '#c86bff'], 80, 220);
     const did = w.dun.did, tier = w.dun.tier, D = DUNGEONS[did], first = !P.flags.clears[did];
@@ -502,7 +507,7 @@ function onEmote(d, from) {
 // ---------------------------------------------------------------------------
 function computeInteract() {
   const w = G.world, me = G.me; G.interact = null;
-  if (!w || !me || me.dead || me.downed || G.menu) { $('prompt').classList.add('hidden'); return; }
+  if (!w || !me || me.dead || me.downed || G.menu || G.cutscene) { $('prompt').classList.add('hidden'); return; }
   let best = null, bd = 1e9;
   const consider = (x, y, r, label, act, hgt) => { const d = dist(me.x, me.y, x, y); if (d < r && d < bd) { bd = d; best = { x, y, label, act, h: hgt }; } };
   if (G.scene === 'village') {
@@ -510,6 +515,7 @@ function computeInteract() {
     for (const o of w.objects) consider(o.x, o.y + (o.role === 'gate' ? 18 : 0), o.role === 'gate' ? 34 : 26, o.role === 'gate' ? (Net.role === 'guest' ? 'Dungeon Gate (host chooses)' : 'Open the Dungeon Gate') : `Use ${o.name}`, () => openNpc(o), o.role === 'gate' ? 36 : 22);
     for (const n of w.npcs) if (n.role === 'villager') consider(n.x, n.y, 18, `Chat with ${n.name}`, () => { n.bubble = pick(['The Hearth burns warmer lately.', 'Careful in those crypts, dear.', 'Brann\'s been humming at the forge again.', 'Did you see the lights by the gate?', 'My cousin went into the grotto once. Once.', 'Bless you, hero.']); toast(`<b>${n.name}:</b> “${n.bubble}”`); }, 18);
   } else if (G.scene === 'dungeon') {
+    for (const s of w.map.stones || []) if (!s.read) consider(s.x, s.y, 22, 'Read the memory stone', () => readStone(s), 26);
     for (const c of w.map.chests) if (!c.hidden && !c.opened) consider(c.x, c.y, 24, c.big ? 'Open the treasure chest' : 'Open chest', () => { const m = { k: 'interact', what: 'chest', i: c.i }; if (Net.isAuth()) hostInteract(w, m, Net.pid); else Net.send('host', m); }, 14);
     for (const p of portalsOf(w)) consider(p.x, p.y, 26, p.kind === 'boss' ? 'Return to Hearthlight (victory)' : (Net.role === 'guest' ? 'Exit portal (host leads)' : 'Leave the dungeon (keep your loot)'), () => { const m = { k: 'interact', what: 'portal', kind: p.kind }; if (Net.isAuth()) hostInteract(w, m, Net.pid); else Net.send('host', m); }, 22);
   }
@@ -560,6 +566,7 @@ function discoverRooms(w) {
 function onKeyCommand(e) {
   if (G.scene === 'title') { if (e.code === 'Escape' && G.menu) closeMenu(); return; }
   const k = e.code;
+  if (Story.active && Story.modal) { e.preventDefault(); if (k === 'Escape') Story.skip(); else if (k === 'Space' || k === 'KeyE' || k === 'Enter' || k === 'NumpadEnter') Story.advance(); return; }
   if (k === 'Escape') { if (G.menu) closeMenu(); else openPause('game'); return; }
   if (k === 'Tab' || k === 'KeyI') { e.preventDefault(); if (G.menu === 'pause' && UI.pauseTab === 'inv') closeMenu(); else openPause('inv'); return; }
   if (k === 'KeyC') { if (G.menu === 'pause' && UI.pauseTab === 'char') closeMenu(); else openPause('char'); return; }
@@ -599,7 +606,7 @@ function tickSim(dt) {
   try { Input.pollPad(); } catch (e) { }
   let simDt = dt;
   if (Net.role === 'solo') {
-    if (G.paused) simDt = 0;
+    if (G.paused || G.cutscene) simDt = 0;
     else if (G.hitstop > 0) { G.hitstop -= dt; simDt = 0; }
     else if (G.slowmo > 0) { G.slowmo -= dt; simDt *= 0.35; }
   } else { G.hitstop = 0; if (G.slowmo > 0) G.slowmo -= dt; }
@@ -620,6 +627,7 @@ function frameBody() {
   if (G.scene === 'title') updateTitleCam(dt); else updateCamera(dt);
   updateFx(G.paused ? 0 : (Net.role === 'solo' && G.hitstop > 0 ? dt * 0.15 : dt));
   if (G.cine > 0) G.cine -= dt;
+  Story.update(dt);
   if (!G.paused) ambientFx(dt);
   // mouse -> world
   Input.wx = Input.mx / R.S + G.cam.x - R.W / 2; Input.wy = Input.my / R.S + G.cam.y - R.H / 2;
@@ -664,6 +672,7 @@ function updateTitleCam(dt) {
 function boot() {
   loadSettings();
   Sprites.init();
+  Story.init();
   initRender();
   Input.init(R.cv);
   $('chatin').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); closeChat(true); } else if (e.key === 'Escape') { e.preventDefault(); closeChat(false); } e.stopPropagation(); });

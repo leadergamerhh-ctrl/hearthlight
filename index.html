@@ -516,6 +516,7 @@ const Music = (() => {
     crypt: { bpm: 60, root: 38, scale: [0, 1, 3, 5, 7, 8, 10], prog: [0, 1, 0, 6], pad: 1, arp: .25, bell: .6, bass: .7, drum: .15, arpPat: [0, 4, 2, 4] },
     forest: { bpm: 70, root: 43, scale: [0, 2, 3, 5, 7, 9, 10], prog: [0, 6, 5, 3], pad: .8, arp: .55, bell: .5, bass: .6, drum: .2, arpPat: [0, 4, 2, 5, 4, 2] },
     cave: { bpm: 56, root: 40, scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 6, 4], pad: 1, arp: .2, bell: .75, bass: .6, drum: .1, arpPat: [0, 4, 7, 4] },
+    abyss: { bpm: 52, root: 37, scale: [0, 1, 3, 5, 6, 8, 10], prog: [0, 1, 4, 1], pad: 1.1, arp: 0.15, bell: 0.9, bass: 0.8, drum: 0.08, arpPat: [0, 4, 6, 4] },
     combat: { bpm: 112, root: 40, scale: [0, 1, 3, 5, 7, 8, 10], prog: [0, 0, 5, 6], pad: .5, arp: .7, bell: .1, bass: 1, drum: .8, arpPat: [0, 0, 4, 0, 2, 0, 4, 6] },
     boss: { bpm: 136, root: 38, scale: [0, 2, 3, 5, 7, 8, 11], prog: [0, 0, 5, 4, 0, 0, 1, 4], pad: .6, arp: .9, bell: .1, bass: 1.1, drum: 1, arpPat: [0, 2, 4, 2, 0, 2, 5, 4], boss: true },
     victory: { bpm: 90, root: 48, scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 3, 4, 0], pad: .8, arp: 1, bell: .6, bass: .6, drum: .3, arpPat: [0, 2, 4, 7, 4, 2, 4, 7] },
@@ -752,6 +753,7 @@ const BIOME_ENEMIES = {
   crypt:  { grunt: 'Restless Bones', archer: 'Bone Archer', shield: 'Crypt Warden', flanker: 'Grave Rat', caster: 'Hollow Acolyte', elite: 'The Gravewarden' },
   forest: { grunt: 'Thornling', archer: 'Bramble Stalker', shield: 'Bark Golem', flanker: 'Feral Wolf', caster: 'Spore Witch', elite: 'Old Rootbeast' },
   cave:   { grunt: 'Drowned Thrall', archer: 'Reef Spitter', shield: 'Shellguard', flanker: 'Reef Crawler', caster: 'Tide Priest', elite: 'The Deep Brute' },
+  abyss:  { grunt: 'Pale Husk', archer: 'Frostbow Wraith', shield: 'Rime Knight', flanker: 'Shade Hound', caster: 'Hollow Cantor', elite: 'The Last Warden' },
 };
 
 const BOSSES = {
@@ -779,10 +781,17 @@ const BOSSES = {
       { at: 0.3, moves: { dive: 2, wave: 2, beam: 2, ring: 2, summon: 1 }, speed: 1.25, msg: 'Lightning crackles across the Tidewyrm!' },
     ], summon: 'flanker',
   },
+  sovereign: {
+    name: 'The Pale Sovereign', sub: 'Devourer of the Hearth', hp: 2900, r: 17, speed: 48, dmg: 33, poise: 9999, xp: 2200,
+    phases: [
+      { at: 1.0, moves: { combo: 3, fan: 2, roots: 2, dive: 1 }, speed: 1 },
+      { at: 0.6, moves: { combo: 2, slam: 2, rain: 2, wave: 2, ring: 2, summon: 1 }, speed: 1.12, msg: 'The Sovereign drinks the dark and grows!' },
+      { at: 0.3, moves: { delayslam: 2, beam: 2, leap: 2, ring: 2, roots: 2 }, speed: 1.3, msg: '"Your little fire will gutter out!"' },
+    ], summon: 'grunt',
+  },
 };
 
-const DUNGEONS = {
-  crypt: {
+const DUNGEONS = {  crypt: {
     name: 'The Sunken Crypt', short: 'Crypt', blurb: 'Bone-choked halls beneath the old chapel. The dead do not rest here.', level: 1, boss: 'hollowking', mat: 'bone', music: 'crypt',
     pool: ['grunt', 'grunt', 'archer', 'flanker', 'shield', 'caster'], card: 'frostnova', unlockAfter: null,
     pal: { floor: '#2a2135', floor2: '#30263d', floorLine: '#1c1526', wall: '#3b2f4d', wallTop: '#191222', wallLine: '#271d34', accent: '#5d4a78', ambient: '#1a1028', fog: '#2b1840', torch: '#ff9a3c' },
@@ -797,9 +806,14 @@ const DUNGEONS = {
     pool: ['grunt', 'archer', 'archer', 'flanker', 'shield', 'caster'], card: 'meteor', unlockAfter: 'forest',
     pal: { floor: '#1d2a33', floor2: '#22323d', floorLine: '#141e25', wall: '#2c3f4c', wallTop: '#0e161c', wallLine: '#1d2b35', accent: '#3fb7c1', ambient: '#0c1824', fog: '#123040', torch: '#7fe8ff' },
   },
+  abyss: {
+    name: 'The Hollow Below', short: 'Hollow', blurb: 'A frozen wound beneath the sea floor, where light goes to die. The Pale Sovereign waits at the bottom.', level: 15, boss: 'sovereign', mat: 'ember', music: 'abyss',
+    pool: ['grunt', 'archer', 'shield', 'flanker', 'caster', 'caster'], card: 'spiritblades', unlockAfter: null,
+    unlockReq: p => p.flags.clears.crypt && p.flags.clears.forest && p.flags.clears.cave, lockText: 'Locked: recover all three shards of the Ember Heart first.',
+    pal: { floor: '#1e1c28', floor2: '#24212f', floorLine: '#110f18', wall: '#2c2838', wallTop: '#0c0a12', wallLine: '#1b1825', accent: '#a8c8ff', ambient: '#0e0c1a', fog: '#1a1830', torch: '#9fc8ff' },
+  },
 };
-const TIERS = [
-  { name: 'Normal', lvl: 0, hp: 1, dmg: 1, luck: 0 },
+const TIERS = [  { name: 'Normal', lvl: 0, hp: 1, dmg: 1, luck: 0 },
   { name: 'Veteran', lvl: 4, hp: 1.6, dmg: 1.35, luck: 0.05 },
   { name: 'Nightmare', lvl: 9, hp: 2.6, dmg: 1.8, luck: 0.12 },
 ];
@@ -815,6 +829,7 @@ const VILLAGE_UNLOCKS = [
   { id: 'tavern', name: 'The Ember Mug Tavern', req: p => p.flags.clears.forest, hint: 'Defeat the Thornmother' },
   { id: 'lanterns', name: 'Lantern Road', req: p => (p.stats.bounties || 0) >= 3, hint: 'Complete 3 bounties' },
   { id: 'monument', name: 'Monument of the Hearth', req: p => p.flags.clears.cave, hint: 'Defeat the Tidewyrm' },
+  { id: 'restored', name: 'The Hearth Restored', req: p => p.flags.clears.abyss, hint: 'Defeat the Pale Sovereign' },
 ];
 function villageRenown(p) { return VILLAGE_UNLOCKS.filter(u => u.req(p)).length; }
 
@@ -857,6 +872,9 @@ const ACHIEVEMENTS = [
   { id: 'coop', name: 'Fellowship', desc: 'Clear a dungeon with a friend.', test: p => (p.stats.coopClears || 0) >= 1 },
   { id: 'nightmare', name: 'Into the Nightmare', desc: 'Clear any dungeon on Nightmare.', test: p => (p.stats.nightmare || 0) >= 1 },
   { id: 'village', name: 'The Hearth Burns Bright', desc: 'Unlock every village building.', test: p => villageRenown(p) >= VILLAGE_UNLOCKS.length },
+  { id: 'sovereign', name: 'Hearthkeeper', desc: 'Defeat the Pale Sovereign.', test: p => p.flags.clears.abyss },
+  { id: 'story', name: 'The Long Night Ends', desc: 'Complete story mode.', test: p => p.story && p.story.seen && p.story.seen.epilogue },
+  { id: 'lore', name: 'Keeper of Memory', desc: 'Read every lore stone.', test: p => p.story && p.story.lore && p.story.lore.length >= 16 },
 ];
 
 const PLAYER_COLORS = ['#3fc9c0', '#ff8a3a', '#c56cff', '#ffd23f', '#5aa0ff', '#ff5a7a'];
@@ -1326,9 +1344,42 @@ function bossTidewyrm() {
   }, { ax: 35, ay: 63 });
 }
 
+// The Pale Sovereign: a fallen star in a ragged robe of frost, crowned in icicles (58x70)
+function bossSovereign() {
+  return makeSpr('sovereign', 60, 72, 5, (P, f) => {
+    const { E, L } = bossKit(P);
+    const back = f === 4, wf = back ? 0 : f, by = [0, -1, -2, -1][wf], sway = [0, 1, 0, -1][wf];
+    const robe = '#d8e0f0', robe2 = '#9aa8c8', robe3 = '#5a6488', void_ = '#0a0814', ice = '#bfe8ff', iceL = '#ffffff', glow = '#a8d8ff';
+    const Q = (x, y, w, h, c) => P(x, y + by, w, h, c);
+    // floating ice fragments around it
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + wf * 0.4, rx = 30 + Math.cos(a) * 26, ry = 40 + Math.sin(a) * 10; P(Math.round(rx), Math.round(ry + by), 2, 3, i % 2 ? ice : robe2); }
+    // long ragged robe, hovering (no feet)
+    Q(17, 22, 26, 22, robe2); Q(14, 34, 32, 16, robe2); Q(11, 46, 38, 12, robe3);
+    for (let i = 0; i < 10; i++) Q(11 + i * 4 + (i % 2 ? sway : 0), 58, 3, 3 + ((i + wf) % 3), robe3);
+    Q(19, 22, 22, 30, robe); Q(26, 22, 8, 34, robe2); Q(19, 22, 22, 2, '#ffffff');
+    if (!back) { Q(27, 26, 6, 26, void_); for (let i = 0; i < 5; i++) Q(29, 28 + i * 5, 2, 2, glow); } // a rift of starless dark down its chest
+    // long arms ending in claws
+    const aw = [0, 1, 0, -1][wf];
+    L(17, 25, 6, 40 + aw, robe2, 5); L(43, 25, 54, 40 - aw, robe2, 5);
+    for (const [hx, hy, dir] of [[6, 41 + aw, -1], [54, 41 - aw, 1]]) { for (let k = 0; k < 3; k++) L(hx, hy, hx + dir * (2 + k), hy + 6 + k, ice, 1); P(hx - 2, hy - 1, 4, 3, robe); }
+    // shoulders
+    E(18, 22, 6, 4, robe); E(42, 22, 6, 4, robe);
+    // hooded head with a single cold light
+    E(30, 13, 9, 10, robe); Q(21, 12, 18, 12, robe); Q(22, 5, 16, 2, robe2);
+    if (!back) { E(30, 15, 6, 7, void_); P(29, 13 + by, 3, 3, glow); P(30, 14 + by, 1, 1, iceL); }
+    // crown of icicles
+    for (let i = 0; i < 7; i++) { const x = 20 + i * 3.3, hgt = 4 + (i === 3 ? 6 : i % 2 ? 2 : 4); L(Math.round(x), 6 + by, Math.round(x), 6 + by - hgt, i === 3 ? iceL : ice, 2); }
+  }, { ax: 30, ay: 64 });
+}
+
 // --------------------------- props -----------------------------------------
 function buildProps() {
-  makeSpr('chest', 16, 14, 2, (P, f) => {
+  // memory stone: a standing stone with pale glowing runes (lore)
+  makeSpr('memstone', 14, 24, 2, (P, f) => {
+    const s = '#5a6078', s2 = '#3a3e54', g = f ? '#d8f0ff' : '#8fc8ff';
+    P(3, 2, 8, 20, s); P(2, 5, 10, 17, s); P(4, 1, 6, 1, s); P(10, 5, 2, 17, s2); P(2, 20, 11, 3, s2);
+    P(6, 5, 2, 1, g); P(5, 7, 1, 3, g); P(8, 8, 1, 2, g); P(6, 11, 3, 1, g); P(6, 14, 1, 3, g); P(8, 15, 1, 1, g); P(5, 18, 4, 1, g);
+  }, { ax: 7, ay: 22 });  makeSpr('chest', 16, 14, 2, (P, f) => {
     const w = '#7a4a26', w2 = '#4f2e17', g = '#f0b752';
     if (f === 0) { P(1, 4, 14, 9, w); P(1, 4, 14, 3, shade(w, 1.2)); P(1, 7, 14, 1, w2); P(1, 4, 2, 9, g); P(13, 4, 2, 9, g); P(7, 6, 2, 3, g); P(7, 8, 2, 1, INK); }
     else { P(1, 7, 14, 6, w); P(1, 2, 14, 4, w2); P(2, 6, 12, 2, '#ffe9a0'); P(1, 7, 2, 6, g); P(13, 7, 2, 6, g); P(1, 2, 14, 1, shade(w, 1.2)); }
@@ -1340,7 +1391,7 @@ function buildProps() {
   }, { ax: 11, ay: 16 });
   makeSpr('key', 9, 13, 1, (P) => { const g = '#ffd34a'; P(2, 0, 5, 5, g); P(3, 1, 3, 3, INK); P(4, 5, 1, 7, g); P(5, 8, 2, 1, g); P(5, 10, 2, 1, g); P(3, 0, 3, 1, '#fff2a0'); }, { ax: 4, ay: 12 });
   makeSpr('bosskey', 11, 15, 1, (P) => { const g = '#e05aff'; P(2, 0, 7, 7, g); P(4, 2, 3, 3, INK); P(5, 7, 1, 7, g); P(6, 10, 3, 1, g); P(6, 12, 3, 1, g); P(3, 0, 5, 1, '#ffc2ff'); P(5, 3, 1, 1, '#ffef6a'); }, { ax: 5, ay: 14 });
-  for (const [k, c] of [['crypt', '#8a7a9a'], ['forest', '#8a6a3a'], ['cave', '#4a8a9a'], ['village', '#b0703a']]) {
+  for (const [k, c] of [['crypt', '#8a7a9a'], ['forest', '#8a6a3a'], ['cave', '#4a8a9a'], ['village', '#b0703a'], ['abyss', '#8a94b0']]) {
     makeSpr('pot_' + k, 12, 13, 1, (P) => { P(3, 0, 6, 2, shade(c, 0.7)); P(2, 2, 8, 2, c); P(1, 4, 10, 7, c); P(2, 11, 8, 1, shade(c, 0.7)); P(2, 5, 8, 1, shade(c, 1.3)); P(8, 4, 2, 6, shade(c, 0.75)); P(3, 7, 6, 1, shade(c, 0.8)); }, { ax: 6, ay: 12 });
   }
   makeSpr('barrel', 12, 14, 1, (P) => { const w = '#7a4f2a'; P(1, 1, 10, 12, w); P(1, 1, 10, 2, shade(w, 1.25)); P(1, 4, 10, 1, '#3a3a44'); P(1, 10, 10, 1, '#3a3a44'); P(8, 2, 2, 10, shade(w, 0.75)); }, { ax: 6, ay: 13 });
@@ -1431,8 +1482,14 @@ function buildCharacters() {
   humanoid('npc_bard', { skin: '#e0b089', body: '#2a6a4a', hair: '#c86a2a', hat: '#2a4a3a', feather: '#e84a4a', legs: '#5a4a3a', boots: '#3a2a1a', strap: '#8a5a2a', collarScarf: '#d8b04a' });
   const vc = [['#7a5a3a', '#4a3a2a', '#d8a07a'], ['#3a5a7a', '#2a2a3a', '#c88a6a'], ['#7a3a3a', '#6a4a2a', '#e0b89a'], ['#5a6a3a', '#2a1e18', '#a07050']];
   vc.forEach(([b, hair, s], i) => humanoid('villager' + i, { skin: s, body: b, hair, legs: shade(b, .6), boots: '#2a1e18', longHair: i % 2 === 1, apron: i === 2 ? '#d8c8a8' : null, pouch: i === 0 ? '#6a4a2a' : null, collarScarf: i === 3 ? '#c86a2a' : null }));
-  bossHollowKing(); bossThornmother(); bossTidewyrm();
-}
+  // the Hollow Below: pale, frost-bitten things
+  humanoid('abyss_grunt', { skin: '#c8d4e8', skel: true, body: '#3a4058', boots: '#2a3048', eyes: '#a8d8ff', helmet: '#8a98b8' });
+  humanoid('abyss_archer', { skin: '#b8c8e0', body: '#2a3048', hood: '#d8e0f0', faceDark: true, eyes: '#a8d8ff', legs: '#3a4058', boots: '#1a1e30', cape: '#8a98b8' });
+  humanoid('abyss_shield', { skin: '#a8b8d0', body: '#4a5470', body2: '#343c58', helm: '#c8d4e8', eyes: '#a8d8ff', pauldron: '#e0e8f8', legs: '#343c58', boots: '#1a1e30', plume: '#a8d8ff', chest: '#7a8ab0', glove: '#c8d4e8' });
+  quad('abyss_flanker', { body: '#3a3a58', eye: '#a8d8ff', tail: '#5a5a80', snout: '#2a2a40', ear: '#5a5a80', spikes: '#c8e0ff' });
+  caster('abyss_caster', { robe: '#c8d0e8', hood: '#e0e8f8', trim: '#5a7ac8', eyes: '#a8d8ff', hand: '#a8d8ff' });
+  brute('abyss_elite', { body: '#3a4058', metal: '#a8b4d0', skin: '#c8d4e8', eyes: '#a8d8ff', horn: '#e0f0ff', belt: '#2a3048', emblem: '#a8d8ff' });
+  bossHollowKing(); bossThornmother(); bossTidewyrm(); bossSovereign();}
 const _playerSprCache = {};
 function playerSprite(color) {
   if (_playerSprCache[color]) return _playerSprCache[color];
@@ -1822,7 +1879,7 @@ function genDungeon(did, tier, seed) {
     const nd = Math.floor(r.w * r.h / 28);
     for (let k = 0; k < nd; k++) {
       const x = rng.int(r.x0, r.x1), y = rng.int(r.y0, r.y1); if (get(x, y) !== T.FLOOR) continue;
-      const choices = did === 'crypt' ? ['bones', 'bones', 'grave'] : did === 'forest' ? ['bush', 'mushroom', 'rock', 'bush'] : ['crystal', 'rock', 'mushroom'];
+      const choices = did === 'crypt' ? ['bones', 'bones', 'grave'] : did === 'forest' ? ['bush', 'mushroom', 'rock', 'bush'] : did === 'abyss' ? ['crystal', 'bones', 'rock', 'grave'] : ['crystal', 'rock', 'mushroom'];
       const spr = rng.pick(choices);
       if (spr === 'grave' && (x === r.x0 || x === r.x1)) continue;
       map.decor.push({ spr, x: x * TS + 8 + rng.int(-3, 3), y: y * TS + 12, flat: spr === 'bones' });
@@ -1856,7 +1913,15 @@ function genDungeon(did, tier, seed) {
     // tile clear check guarantee: make sure pillars didn't seal a door (doors are on the perimeter, perimeter is clear)
   }
   map.decor = map.decor.filter(d => d.wall || d.spr === 'brazier' || !((map.rugs || []).some(rg => d.x > rg.x - 8 && d.x < rg.x + rg.w + 8 && d.y > rg.y - 4 && d.y < rg.y + rg.h + 12) || (map.arena && Math.hypot(d.x - map.arena.x, (d.y - map.arena.y) / 0.62) < map.arena.r + 10)));
-  map.pots = map.pots.filter(p => get(p.tx, p.ty) === T.FLOOR);
+  // memory stones: two lore stones in ordinary rooms
+  map.stones = [];
+  for (const r of rng.shuffle(rooms.filter(r => r.type === 'combat' || r.type === 'trap')).slice(0, 2)) {
+    const tx = r.x1 - 2, ty = r.y0 + 1;
+    if (get(tx, ty) !== T.FLOOR) continue;
+    map.stones.push({ x: tx * TS + 8, y: ty * TS + 14, room: r.i, read: false });
+    map.lights.push({ x: tx * TS + 8, y: ty * TS + 2, r: 46, color: '#8fc8ff', flicker: 0.2 });
+  }
+  map.pots = map.pots.filter(p => get(p.tx, p.ty) === T.FLOOR && !map.stones.some(s => Math.abs(s.x - p.x) < 14 && Math.abs(s.y - p.y) < 14));
   map.pots.forEach((p, i) => p.i = i);
   // keep walls next to floor; walls two above a floor become "upper faces"; everything else is void
   const t2 = new Uint8Array(t);
@@ -2239,6 +2304,7 @@ const Input = {
     cv.addEventListener('mousedown', (e) => {
       SFX.init();
       this.mouse[e.button] = true;
+      if (G.cutscene) { Story.advance(); return; }
       if (G.scene === 'title' || G.menu || G.paused) return;
       if (e.button === 0) this.buf.light = nowSec();
       if (e.button === 2) this.buf.heavy = nowSec();
@@ -2301,7 +2367,7 @@ function newProfile(name, color) {
     quests: { active: [], progress: {}, claimedDaily: {} },
     ach: {}, flags: { clears: {}, tiers: { crypt: 0 }, seenIntro: false },
     stats: { kills: 0, epics: 0, maxUpg: 0, deaths: 0, bounties: 0, parry: 0, revives: 0, coopClears: 0, nightmare: 0, playtime: 0, runs: 0 },
-    shopSeed: 1, created: Date.now(),
+    shopSeed: 1, created: Date.now(), story: { on: true, seen: {}, lore: [] },
   };
   P.equip.weapon = genItem(1, { slot: 'weapon', type: 'sword', rarity: 'common' }); P.equip.weapon.name = 'Traveler\'s Sword';
   P.equip.armor = genItem(1, { slot: 'armor', type: 'leather', rarity: 'common' }); P.equip.armor.name = 'Worn Leathers';
@@ -2384,10 +2450,10 @@ function updateLocalPlayer(p, w, dt) {
   if (p.dead) { p.state = 'dead'; return; }
   if (p.downed) { updateDowned(p, w, dt); return; }
 
-  const [mx, my] = (G.menu || G.chatting) ? [0, 0] : Input.moveVec();
+  const [mx, my] = (G.menu || G.chatting || G.cutscene) ? [0, 0] : Input.moveVec();
   const moving = mx || my;
   if (moving && (p.state === 'idle' || p.state === 'move')) p.face = Math.atan2(my, mx);
-  p.aim = (G.menu || G.chatting) ? p.aim : aimAngle(p);
+  p.aim = (G.menu || G.chatting || G.cutscene) ? p.aim : aimAngle(p);
   let spd = 92 * S.speed * (p.buffs.haste ? 1.2 : 1);
   if (w.map && tileAt(w.map, Math.floor(p.x / TS), Math.floor(p.y / TS)) === T.WATER) spd *= 0.7;
   let tvx = mx * spd, tvy = my * spd, ctrl = 22;
@@ -2476,7 +2542,7 @@ function updateLocalPlayer(p, w, dt) {
     }
   }
   // ---- start new actions from idle/move ----
-  if (canAct(p) && !G.menu && !G.chatting) {
+  if (canAct(p) && !G.menu && !G.chatting && !G.cutscene) {
     if (Input.peek('roll')) tryRoll(p, mx, my);
     else if (Input.take('light')) startAttack(p, false, p.comboT > 0 ? (p.combo + 1) % 3 : 0);
     else if (Input.take('heavy')) startAttack(p, true, 0);
@@ -3296,7 +3362,7 @@ const BOSS_MOVES = {
       if (at(e, t - 0.3) && p) faceTo(e, p, 0, TICK);
       if (at(e, t)) {
         sfxAt(e.bk === 'tidewyrm' ? 'orb' : 'arrow', e.x, e.y, 1);
-        const kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : 'thorn';
+        const kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : e.bk === 'sovereign' ? 'shard' : 'thorn';
         for (let i = 0; i < n; i++) { const a = e.aim + (i - (n - 1) / 2) * 0.2 + (v % 2 ? 0.1 : 0); spawnEProj(w, { kind, x: e.x, y: e.y - 16, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160, r: 4, dmg: Math.round(e.dmg * 0.75), life: 3 }); }
       }
     }
@@ -3307,7 +3373,7 @@ const BOSS_MOVES = {
     if (at(e, 0.0001)) spawnHazard(w, { shape: 'circle', owner: e.id, attach: true, x: e.x, y: e.y, r: 24, dmg: 0, tele: 0.6, act: 0, rune: true });
     for (let k = 0; k < waves; k++) {
       if (at(e, 0.6 + k * 0.55)) {
-        sfxAt('orb', e.x, e.y, 1); const off = rnd(0, TAU), kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : 'thorn';
+        sfxAt('orb', e.x, e.y, 1); const off = rnd(0, TAU), kind = e.bk === 'hollowking' ? 'blade' : e.bk === 'tidewyrm' ? 'bubble' : e.bk === 'sovereign' ? 'shard' : 'thorn';
         for (let i = 0; i < n; i++) { if (i % 6 === 0) continue; const a = off + i * TAU / n; spawnEProj(w, { kind, x: e.x, y: e.y - 12, vx: Math.cos(a) * 120, vy: Math.sin(a) * 120, r: 4, dmg: Math.round(e.dmg * 0.7), life: 3.5 }); }
       }
     }
@@ -4021,6 +4087,7 @@ function lightSprite(color) {
 function updateCamera(dt) {
   const w = G.world, me = G.me, cam = G.cam; if (!w || !me) return;
   let tx = me.x + Math.cos(me.aim) * 10, ty = me.y - 8 + Math.sin(me.aim) * 8;
+  if (G.camTarget) { tx = G.camTarget.x; ty = G.camTarget.y; }
   if (w.map.kind === 'dungeon') {
     const ri = roomIndexAt(w.map, me.x, me.y);
     // boss fights: frame both the hero and the boss
@@ -4067,6 +4134,7 @@ function render(alpha) {
   for (const d of w.map.decor) if (!d.flat && !d.wall && inView(d.x, d.y)) list.push({ y: d.y, f: () => drawSpr(ctx, SPR[d.spr], 0, d.x, d.y) });
   if (w.map.pots) for (const p of w.map.pots) if (!p.broken && inView(p.x, p.y)) list.push({ y: p.y, f: () => { shadowAt(ctx, p.x, p.y, 5); drawSpr(ctx, SPR['pot_' + w.map.biome] || SPR.pot_crypt, 0, p.x, p.y); } });
   if (w.map.chests) for (const c of w.map.chests) if (!c.hidden && inView(c.x, c.y)) list.push({ y: c.y, f: () => drawChest(ctx, c, w) });
+  if (w.map.stones) for (const s of w.map.stones) if (inView(s.x, s.y)) list.push({ y: s.y, f: () => { shadowAt(ctx, s.x, s.y, 7); drawSpr(ctx, SPR.memstone, s.read ? 0 : Math.floor(G.rt * 2.5) % 2, s.x, s.y); if (!s.read && Math.random() < 0.12) G.fx.parts.push(part(s.x + rnd(-4, 4), s.y - rnd(6, 18), 0, -14, '#bfe8ff', 0.8, 1, true)); } });
   for (const p of portalsOf(w)) if (inView(p.x, p.y, 60)) list.push({ y: p.y + 4, f: () => drawPortal(ctx, p) });
   if (w.npcs) for (const n of w.npcs) if (inView(n.x, n.y)) list.push({ y: n.y, f: () => drawNpc(ctx, n) });
   if (w.objects) for (const o of w.objects) if (inView(o.x, o.y, 60)) list.push({ y: o.y, f: () => { if (o.role === 'gate') drawGateSwirl(ctx, o); drawSpr(ctx, SPR[o.spr], 0, o.x, o.y); } });
@@ -4096,7 +4164,7 @@ function render(alpha) {
   for (const r of G.fx.rings) { const u = r.t / r.dur; ctx.globalAlpha = (1 - u) * 0.9; ctx.strokeStyle = r.c; ctx.lineWidth = Math.max(1, 4 * (1 - u)); ctx.beginPath(); ctx.ellipse(r.x, r.y, lerp(r.r0, r.r1, easeOut(u)), lerp(r.r0, r.r1, easeOut(u)) * 0.6, 0, 0, TAU); ctx.stroke(); }
   for (const p of G.fx.parts) if (p.glow) { ctx.globalAlpha = p.amb ? Math.sin(Math.PI * (1 - p.life / p.max)) * (0.5 + 0.5 * Math.sin(G.rt * 5 + p.x)) : clamp(p.life / p.max * 1.4, 0, 1); ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x - p.s / 2), Math.round(p.y - p.s / 2), p.s, p.s); }
   for (const pr of w.pprojs) drawPProjGlow(ctx, pr);
-  for (const pr of w.eprojs) { const el = now - pr.t0; if (el >= 0) { const x = pr.x0 + pr.vx * el, y = pr.y0 + pr.vy * el; ctx.globalAlpha = 0.5; ctx.drawImage(lightSprite(pr.kind === 'orb' ? '#9b6cff' : pr.kind === 'bubble' ? '#3fd0e0' : pr.kind === 'blade' ? '#8ff3ff' : pr.kind === 'thorn' ? '#9be86a' : '#ff9a5a'), x - 10, y - 10, 20, 20); } }
+  for (const pr of w.eprojs) { const el = now - pr.t0; if (el >= 0) { const x = pr.x0 + pr.vx * el, y = pr.y0 + pr.vy * el; ctx.globalAlpha = 0.5; ctx.drawImage(lightSprite(pr.kind === 'orb' ? '#9b6cff' : pr.kind === 'bubble' ? '#3fd0e0' : pr.kind === 'blade' ? '#8ff3ff' : pr.kind === 'thorn' ? '#9be86a' : pr.kind === 'shard' ? '#a8d8ff' : '#ff9a5a'), x - 10, y - 10, 20, 20); } }
   if (G.fx.zaps) for (const z of G.fx.zaps) drawZap(ctx, z);
   drawFlames(ctx, w, ox, oy);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -4417,6 +4485,7 @@ function drawEProj(ctx, x, y, pr) {
   else if (pr.kind === 'bubble') { ctx.strokeStyle = '#9ff8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, 4, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(63,208,224,.5)'; ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(-2, -2, 1, 1); }
   else if (pr.kind === 'blade') { ctx.fillStyle = '#8ff3ff'; ctx.fillRect(-5, -1, 10, 2); ctx.fillStyle = '#fff'; ctx.fillRect(1, -1, 4, 1); }
   else if (pr.kind === 'thorn') { ctx.fillStyle = '#6fae4f'; ctx.fillRect(-4, -1, 8, 2); ctx.fillStyle = '#c9d27a'; ctx.fillRect(3, -1, 2, 2); }
+  else if (pr.kind === 'shard') { ctx.fillStyle = '#a8d8ff'; ctx.fillRect(-5, -1, 9, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(1, 0, 4, 1); ctx.fillStyle = '#5a7ac8'; ctx.fillRect(-5, 1, 6, 1); }
   ctx.restore();
 }
 function drawPProj(ctx, pr) {
@@ -4836,6 +4905,7 @@ function updateHUD(dt) {
     $('h-keys').innerHTML = w && w.dun ? `${w.dun.keys ? `<span style="color:#ffd34a">⚷</span> ×${w.dun.keys}` : ''} ${w.dun.bossKey ? '<span style="color:#e05aff">⚷ Boss Key</span>' : ''}` : '';
     $('h-pts').innerHTML = P.pts ? `<span style="color:var(--teal)">+${P.pts} stat point${P.pts > 1 ? 's' : ''} (C)</span>` : '';
     updateParty(); drawMinimap($('minimap'), false);
+    { const ob = storyObjective(P); $('objective').innerHTML = ob ? `<b>Objective</b>${esc(ob)}` : ''; }
     $('area-name').textContent = G.scene === 'village' ? 'Hearthlight Village' : w && w.dun ? `${DUNGEONS[w.dun.did].name} · ${TIERS[w.dun.tier].name}` : '';
   }
   // boss bar
@@ -4874,6 +4944,7 @@ function flashHotbar(i, kind) { const s = UI.slots[i]; if (!s) return; s.s.class
 //  Toasts, banners, chat, pickups
 // ---------------------------------------------------------------------------
 function toast(msg, cls = '', dur = 3) {
+  if (G.cutscene) { (UI.heldToasts = UI.heldToasts || []).push([msg, cls, dur]); return; } // shown after the scene
   const t = h('div', { class: 'toast ' + cls, html: msg }); $('toasts').appendChild(t);
   setTimeout(() => t.classList.add('out'), dur * 1000); setTimeout(() => t.remove(), dur * 1000 + 450);
   while ($('toasts').children.length > 4) $('toasts').firstChild.remove();
@@ -4981,7 +5052,7 @@ function emptyCell(label) { return h('div', { class: 'cell', style: { opacity: .
 // ---------------------------------------------------------------------------
 //  Pause menu (tabs)
 // ---------------------------------------------------------------------------
-const PAUSE_TABS = [['inv', 'Inventory'], ['char', 'Character'], ['cards', 'Cards'], ['quests', 'Bounties'], ['ach', 'Achievements'], ['map', 'Map'], ['party', 'Co-op'], ['settings', 'Settings'], ['game', 'Game']];
+const PAUSE_TABS = [['inv', 'Inventory'], ['char', 'Character'], ['cards', 'Cards'], ['story', 'Story'], ['quests', 'Bounties'], ['ach', 'Achievements'], ['map', 'Map'], ['party', 'Co-op'], ['settings', 'Settings'], ['game', 'Game']];
 function openPause(tab = 'inv') {
   UI.pauseTab = tab;
   openMenu('pause', (panel) => {
@@ -4990,7 +5061,7 @@ function openPause(tab = 'inv') {
     for (const [id, label] of PAUSE_TABS) tabs.appendChild(h('div', { class: 'tab' + (UI.pauseTab === id ? ' on' : ''), onclick: () => { SFX.play('ui'); UI.pauseTab = id; refreshMenu(); } }, label));
     panel.appendChild(tabs);
     const body = h('div'); panel.appendChild(body);
-    ({ inv: tabInventory, char: tabCharacter, cards: tabCards, quests: tabQuests, ach: tabAchievements, map: tabMap, party: tabParty, settings: tabSettings, game: tabGame })[UI.pauseTab](body);
+    ({ inv: tabInventory, char: tabCharacter, cards: tabCards, story: tabStory, quests: tabQuests, ach: tabAchievements, map: tabMap, party: tabParty, settings: tabSettings, game: tabGame })[UI.pauseTab](body);
     if (Net.role !== 'solo') panel.appendChild(h('div', { class: 'note', style: { marginTop: '10px' } }, 'Co-op: the world keeps running while this menu is open.'));
   });
 }
@@ -5197,7 +5268,7 @@ function openNpc(n) {
 function openElder() {
   const P = G.P, ren = villageRenown(P);
   openMenu('elder', (p) => {
-    npcHeader(p, 'Elder Hessa', `Keeper of the Hearth · Village renown ${ren}/${VILLAGE_UNLOCKS.length}`, pick(NPC_LINES.hessa));
+    npcHeader(p, 'Elder Hessa', `Keeper of the Hearth · Village renown ${ren}/${VILLAGE_UNLOCKS.length}`, npcLine('hessa'));
     p.appendChild(h('h3', {}, 'The village'));
     for (const u of VILLAGE_UNLOCKS) p.appendChild(h('div', { class: 'statrow' }, h('span', {}, u.name), u.req(P) ? h('b', { style: { color: 'var(--green)' } }, 'Built') : h('span', { class: 'note' }, u.hint)));
     p.appendChild(h('h3', {}, 'Advice'));
@@ -5209,7 +5280,7 @@ function openSmith() {
   const P = G.P; UI.smithTab = UI.smithTab || 'upgrade';
   openMenu('smith', (p) => {
     p.style.width = 'min(780px,94vw)';
-    npcHeader(p, 'Brann the Smith', 'Upgrades are permanent: +10% base stats per level, up to +' + MAX_UPG, pick(NPC_LINES.brann));
+    npcHeader(p, 'Brann the Smith', 'Upgrades are permanent: +10% base stats per level, up to +' + MAX_UPG, npcLine('brann'));
     p.appendChild(matsLine(P));
     const tabs = h('div', { class: 'tabs' }); for (const [id, l] of [['upgrade', 'Upgrade'], ['salvage', 'Salvage']]) tabs.appendChild(h('div', { class: 'tab' + (UI.smithTab === id ? ' on' : ''), onclick: () => { UI.smithTab = id; refreshMenu(); } }, l)); p.appendChild(tabs);
     const list = h('div', { class: 'list' });
@@ -5238,7 +5309,7 @@ function openShop() {
   const P = G.P; UI.shopTab = UI.shopTab || 'buy';
   openMenu('shop', (p) => {
     p.style.width = 'min(780px,94vw)';
-    npcHeader(p, 'Mira the Trader', 'New stock after every expedition.', pick(NPC_LINES.mira));
+    npcHeader(p, 'Mira the Trader', 'New stock after every expedition.', npcLine('mira'));
     p.appendChild(matsLine(P));
     const tabs = h('div', { class: 'tabs' }); for (const [id, l] of [['buy', 'Buy'], ['sell', 'Sell']]) tabs.appendChild(h('div', { class: 'tab' + (UI.shopTab === id ? ' on' : ''), onclick: () => { UI.shopTab = id; refreshMenu(); } }, l)); p.appendChild(tabs);
     const list = h('div', { class: 'list' });
@@ -5303,7 +5374,7 @@ function openArcanist() {
   const P = G.P;
   openMenu('arcanist', (p) => {
     p.style.width = 'min(820px,94vw)';
-    npcHeader(p, 'Vesh the Arcanist', 'Sells copies of cards she has studied.', pick(NPC_LINES.vesh));
+    npcHeader(p, 'Vesh the Arcanist', 'Sells copies of cards she has studied.', npcLine('vesh'));
     p.appendChild(matsLine(P));
     const notOwned = Object.keys(CARDS).filter(id => !P.cards.owned.includes(id));
     if (!notOwned.length) p.appendChild(h('div', { class: 'note' }, 'You own every card she knows. Impressive.'));
@@ -5325,13 +5396,13 @@ function openGate() {
     p.style.width = 'min(720px,94vw)';
     npcHeader(p, 'The Dungeon Gate', Net.role === 'host' ? `Your party (${Net.partySize()}) will travel with you. Enemies grow tougher with more heroes.` : 'Choose where the portal leads.');
     for (const [id, D] of Object.entries(DUNGEONS)) {
-      const unlocked = !D.unlockAfter || P.flags.clears[D.unlockAfter];
+      const unlocked = D.unlockReq ? D.unlockReq(P) : (!D.unlockAfter || P.flags.clears[D.unlockAfter]);
       const maxTier = P.flags.tiers[id] || 0, tier = Math.min(UI.gateTier[id] ?? 0, maxTier);
       const sw = h('canvas', { width: 16, height: 16, class: 'sw' });
       const x = sw.getContext('2d'); x.fillStyle = D.pal.floor; x.fillRect(0, 0, 16, 16); x.fillStyle = D.pal.wall; x.fillRect(0, 0, 16, 6); x.fillStyle = D.pal.accent; x.fillRect(6, 9, 4, 4); x.fillStyle = D.pal.torch; x.fillRect(3, 2, 2, 2);
       const tiers = h('div', { class: 'row', style: { marginTop: '6px' } }, ...TIERS.map((T, i) => h('button', { class: 'btn small' + (i === tier ? ' primary' : ''), disabled: i > maxTier ? 'disabled' : null, onclick: (e) => { e.stopPropagation(); UI.gateTier[id] = i; refreshMenu(); } }, T.name + (i > maxTier ? ' 🔒' : ''))));
       const el = h('div', { class: 'dun' + (unlocked ? '' : ' lock') }, sw,
-        h('div', { style: { flex: 1 } }, h('div', { class: 'dn' }, D.name, P.flags.clears[id] ? h('span', { class: 'pill ok' }, 'cleared') : null), h('div', { class: 'dd' }, unlocked ? D.blurb : `Locked — defeat the boss of ${DUNGEONS[D.unlockAfter].name} first.`), h('div', { class: 'note' }, `Recommended level ${D.level + TIERS[tier].lvl} · Drops ${MATERIALS[D.mat].name}`), unlocked ? tiers : null),
+        h('div', { style: { flex: 1 } }, h('div', { class: 'dn' }, D.name, P.flags.clears[id] ? h('span', { class: 'pill ok' }, 'cleared') : null), h('div', { class: 'dd' }, unlocked ? D.blurb : (D.lockText || `Locked: defeat the boss of ${DUNGEONS[D.unlockAfter].name} first.`)), h('div', { class: 'note' }, `Recommended level ${D.level + TIERS[tier].lvl} · Drops ${MATERIALS[D.mat].name}`), unlocked ? tiers : null),
         unlocked ? btn('Enter', () => { closeMenu(); hostStartDungeon(id, tier); }, 'primary') : null);
       p.appendChild(el);
     }
@@ -5382,9 +5453,13 @@ function newGameDialog(slot, mode) {
     for (const c of PLAYER_COLORS) { const d = h('div', { style: { background: c }, class: c === color ? 'on' : '' }); d.onclick = () => { color = c; cols.querySelectorAll('div').forEach(x => x.classList.remove('on')); d.classList.add('on'); prev(); }; cols.appendChild(d); }
     const pv = h('canvas', { width: 24, height: 32, style: { width: '72px', height: '96px', imageRendering: 'pixelated' } });
     const prev = () => { const x = pv.getContext('2d'); x.clearRect(0, 0, 24, 32); x.drawImage(playerSprite(color).frames[0], 0, 0); };
-    p.appendChild(h('div', { class: 'row', style: { gap: '20px' } }, pv, h('div', { class: 'col' }, h('div', { class: 'note' }, 'Name'), name, h('div', { class: 'note' }, 'Colour'), cols)));
+    let storyOn = true;
+    const modeRow = h('div', { class: 'row' });
+    const drawMode = () => { modeRow.innerHTML = ''; modeRow.appendChild(btn('Story', () => { storyOn = true; drawMode(); }, storyOn ? 'primary small' : 'small')); modeRow.appendChild(btn('Free play', () => { storyOn = false; drawMode(); }, storyOn ? 'small' : 'primary small')); };
+    drawMode();
+    p.appendChild(h('div', { class: 'row', style: { gap: '20px' } }, pv, h('div', { class: 'col' }, h('div', { class: 'note' }, 'Name'), name, h('div', { class: 'note' }, 'Colour'), cols, h('div', { class: 'note' }, 'Mode'), modeRow, h('div', { class: 'note', style: { maxWidth: '300px' } }, 'Story adds cutscenes, guardian dialogue and the tale of the Ember Heart. Free play skips them. You can switch later in the Story tab.'))));
     prev();
-    p.appendChild(h('div', { style: { marginTop: '16px' } }, btn('Begin', () => { const n = name.value.trim().slice(0, 14) || 'Wanderer'; const P = newProfile(n, color); writeSave(slot, P); closeMenu(); startGame(slot, mode); }, 'primary'), btn('Back', () => openSlots(mode))));
+    p.appendChild(h('div', { style: { marginTop: '16px' } }, btn('Begin', () => { const n = name.value.trim().slice(0, 14) || 'Wanderer'; const P = newProfile(n, color); P.story.on = storyOn; writeSave(slot, P); closeMenu(); startGame(slot, mode); }, 'primary'), btn('Back', () => openSlots(mode))));
     setTimeout(() => name.focus(), 50);
   }, { pause: false });
 }
@@ -5425,6 +5500,8 @@ function loadSettings() {
   try { const s = JSON.parse(lsGet('hl_settings') || 'null'); if (s) { Object.assign(SFX.settings, s.audio || {}); Object.assign(G.settings, s.game || {}); } } catch (e) { }
 }
 function migrate(P) { // keep older saves loadable
+  if (!P.story) P.story = { on: false, seen: {}, lore: [] }; // saves from before story mode start in free play
+  P.story.seen = P.story.seen || {}; P.story.lore = P.story.lore || [];
   const base = newProfile(P.name, P.color);
   for (const k in base) if (P[k] === undefined) P[k] = base[k];
   for (const k in base.stats) if (P.stats[k] === undefined) P.stats[k] = 0;
@@ -5490,7 +5567,8 @@ function enterVillage(first, victory) {
   const sp = map.spawn; placeMe(w, sp.x + (Net.pid % 2 ? 14 : -14) * (Net.pid ? 1 : 0), sp.y + (Net.pid > 1 ? 12 : 0));
   showHUD(true); buildHotbar();
   Music.play('village');
-  if (first && !P.flags.seenIntro) {
+  if (P.story && P.story.on) { P.flags.seenIntro = true; if (first && P.story.seen.prologue) banner('Hearthlight', 'Welcome back, ' + P.name, '', 2.2); storyOnVillage(); }
+  else if (first && !P.flags.seenIntro) {
     P.flags.seenIntro = true;
     setTimeout(() => { banner('Hearthlight', 'The last fire in a darkening land', '', 3.5); }, 400);
     setTimeout(() => toast('Talk to <b>Elder Hessa</b> by the fire, then take the <b>Dungeon Gate</b> to the north.', '', 7), 3800);
@@ -5520,6 +5598,7 @@ function enterDungeon(did, tier, seed) {
   showHUD(true); buildHotbar();
   Music.play(D.music);
   banner(D.name, TIERS[tier].name + (Net.partySize() > 1 ? ` · Party of ${Net.partySize()}` : ''), '', 3);
+  storyOnDungeon(did);
   if (!P.flags.tutDone) {
     P.flags.tutDone = true;
     const tips = ['Enemies <b style="color:#ff6b5e">glow red</b> before they strike. <b>Space</b> rolls — you are invulnerable for most of the roll.',
@@ -5843,11 +5922,12 @@ function onTeleport(m) {
 }
 function onBossEvent(d) {
   const w = G.world, P = G.P;
-  if (d.ev === 'intro') { const B = BOSSES[d.bk]; Music.play('boss'); G.cine = 2.6; setTimeout(() => banner(B.name, B.sub, '', 3), 200); shake(6); SFX.play('roar', 1); }
+  if (d.ev === 'intro') { const B = BOSSES[d.bk]; Music.play('boss'); G.cine = 2.6; setTimeout(() => banner(B.name, B.sub, '', 3), 200); shake(6); SFX.play('roar', 1); setTimeout(() => storyOnBoss('intro', d.bk), 1400); }
   if (d.ev === 'phase') { shake(10); G.flashScreen = 0.4; if (d.msg) banner(d.msg, '', '', 2.2); SFX.play('roar', 1); }
   if (d.ev === 'dying') { G.slowmo = 1.4; G.flashScreen = 0.6; shake(12); }
   if (d.ev === 'dead') {
     w.dun.bossDead = true; w.dun.portal = d.portal; w.dun.bossId = 0;
+    storyOnBoss('dead', d.bk);
     Music.play('victory'); shake(14); G.flashScreen = 0.8;
     deathFx(d.x, d.y, w.dun.did, true); burstFx(d.x, d.y - 10, ['#ffd76a', '#fff', '#c86bff'], 80, 220);
     const did = w.dun.did, tier = w.dun.tier, D = DUNGEONS[did], first = !P.flags.clears[did];
@@ -5905,7 +5985,7 @@ function onEmote(d, from) {
 // ---------------------------------------------------------------------------
 function computeInteract() {
   const w = G.world, me = G.me; G.interact = null;
-  if (!w || !me || me.dead || me.downed || G.menu) { $('prompt').classList.add('hidden'); return; }
+  if (!w || !me || me.dead || me.downed || G.menu || G.cutscene) { $('prompt').classList.add('hidden'); return; }
   let best = null, bd = 1e9;
   const consider = (x, y, r, label, act, hgt) => { const d = dist(me.x, me.y, x, y); if (d < r && d < bd) { bd = d; best = { x, y, label, act, h: hgt }; } };
   if (G.scene === 'village') {
@@ -5913,6 +5993,7 @@ function computeInteract() {
     for (const o of w.objects) consider(o.x, o.y + (o.role === 'gate' ? 18 : 0), o.role === 'gate' ? 34 : 26, o.role === 'gate' ? (Net.role === 'guest' ? 'Dungeon Gate (host chooses)' : 'Open the Dungeon Gate') : `Use ${o.name}`, () => openNpc(o), o.role === 'gate' ? 36 : 22);
     for (const n of w.npcs) if (n.role === 'villager') consider(n.x, n.y, 18, `Chat with ${n.name}`, () => { n.bubble = pick(['The Hearth burns warmer lately.', 'Careful in those crypts, dear.', 'Brann\'s been humming at the forge again.', 'Did you see the lights by the gate?', 'My cousin went into the grotto once. Once.', 'Bless you, hero.']); toast(`<b>${n.name}:</b> “${n.bubble}”`); }, 18);
   } else if (G.scene === 'dungeon') {
+    for (const s of w.map.stones || []) if (!s.read) consider(s.x, s.y, 22, 'Read the memory stone', () => readStone(s), 26);
     for (const c of w.map.chests) if (!c.hidden && !c.opened) consider(c.x, c.y, 24, c.big ? 'Open the treasure chest' : 'Open chest', () => { const m = { k: 'interact', what: 'chest', i: c.i }; if (Net.isAuth()) hostInteract(w, m, Net.pid); else Net.send('host', m); }, 14);
     for (const p of portalsOf(w)) consider(p.x, p.y, 26, p.kind === 'boss' ? 'Return to Hearthlight (victory)' : (Net.role === 'guest' ? 'Exit portal (host leads)' : 'Leave the dungeon (keep your loot)'), () => { const m = { k: 'interact', what: 'portal', kind: p.kind }; if (Net.isAuth()) hostInteract(w, m, Net.pid); else Net.send('host', m); }, 22);
   }
@@ -5963,6 +6044,7 @@ function discoverRooms(w) {
 function onKeyCommand(e) {
   if (G.scene === 'title') { if (e.code === 'Escape' && G.menu) closeMenu(); return; }
   const k = e.code;
+  if (Story.active && Story.modal) { e.preventDefault(); if (k === 'Escape') Story.skip(); else if (k === 'Space' || k === 'KeyE' || k === 'Enter' || k === 'NumpadEnter') Story.advance(); return; }
   if (k === 'Escape') { if (G.menu) closeMenu(); else openPause('game'); return; }
   if (k === 'Tab' || k === 'KeyI') { e.preventDefault(); if (G.menu === 'pause' && UI.pauseTab === 'inv') closeMenu(); else openPause('inv'); return; }
   if (k === 'KeyC') { if (G.menu === 'pause' && UI.pauseTab === 'char') closeMenu(); else openPause('char'); return; }
@@ -6002,7 +6084,7 @@ function tickSim(dt) {
   try { Input.pollPad(); } catch (e) { }
   let simDt = dt;
   if (Net.role === 'solo') {
-    if (G.paused) simDt = 0;
+    if (G.paused || G.cutscene) simDt = 0;
     else if (G.hitstop > 0) { G.hitstop -= dt; simDt = 0; }
     else if (G.slowmo > 0) { G.slowmo -= dt; simDt *= 0.35; }
   } else { G.hitstop = 0; if (G.slowmo > 0) G.slowmo -= dt; }
@@ -6023,6 +6105,7 @@ function frameBody() {
   if (G.scene === 'title') updateTitleCam(dt); else updateCamera(dt);
   updateFx(G.paused ? 0 : (Net.role === 'solo' && G.hitstop > 0 ? dt * 0.15 : dt));
   if (G.cine > 0) G.cine -= dt;
+  Story.update(dt);
   if (!G.paused) ambientFx(dt);
   // mouse -> world
   Input.wx = Input.mx / R.S + G.cam.x - R.W / 2; Input.wy = Input.my / R.S + G.cam.y - R.H / 2;
@@ -6067,6 +6150,7 @@ function updateTitleCam(dt) {
 function boot() {
   loadSettings();
   Sprites.init();
+  Story.init();
   initRender();
   Input.init(R.cv);
   $('chatin').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); closeChat(true); } else if (e.key === 'Escape') { e.preventDefault(); closeChat(false); } e.stopPropagation(); });
@@ -6081,6 +6165,406 @@ function boot() {
   window.HL = { G, Net, SFX, Music }; // handy for debugging in the console
 }
 window.addEventListener('load', boot);
+
+// ---- 12_story.js ----
+// ============================================================================
+//  Story mode: the campaign of the Ember Heart.
+//  Three fallen guardians each hold a shard of the Ember Heart that keeps the
+//  Hearth alive. Free them, bring the shards home, then descend into the Hollow
+//  Below to end the Pale Sovereign, the cold that eats light.
+// ============================================================================
+
+// who can speak, and how to cut a portrait from their sprite
+const SPEAKERS = {
+  hessa: { name: 'Elder Hessa', spr: () => SPR.npc_hessa, crop: [4, 0, 16, 18], color: '#f0d8a8' },
+  brann: { name: 'Brann', spr: () => SPR.npc_brann, crop: [4, 1, 16, 18], color: '#ffb36a' },
+  mira: { name: 'Mira', spr: () => SPR.npc_mira, crop: [4, 0, 16, 18], color: '#f0b752' },
+  vesh: { name: 'Vesh', spr: () => SPR.npc_vesh, crop: [4, 0, 16, 18], color: '#c9a6ff' },
+  hero: { name: null, spr: () => playerSprite(G.P ? G.P.color : '#3fc9c0'), crop: [4, 0, 16, 18], color: null },
+  king: { name: 'The Hollow King', spr: () => SPR.hollowking, crop: [13, 0, 32, 30], color: '#8ff3ff' },
+  thorn: { name: 'Thornmother', spr: () => SPR.thornmother, crop: [16, 4, 44, 40], color: '#ff8ab8' },
+  wyrm: { name: 'The Tidewyrm', spr: () => SPR.tidewyrm, crop: [12, 0, 46, 34], color: '#7fe8ff' },
+  sov: { name: 'The Pale Sovereign', spr: () => SPR.sovereign, crop: [12, 0, 34, 32], color: '#d8e8ff' },
+  narr: { name: null },
+};
+
+// a scene is a list of steps: [speaker, text] or {cam|fx|sfx|banner}
+const STORY = {
+  prologue: [
+    { cam: 'hearth' },
+    ['narr', 'Night has teeth in the valley now. Only one light still burns.'],
+    ['hessa', 'So the road brought you here after all. Few walk it anymore.'],
+    ['hessa', 'This is Hearthlight. That fire is the last true flame in the valley. When it dies, the dark finishes what it started.'],
+    ['hero', 'It looks strong enough to me.'],
+    ['hessa', 'Look closer. It burns lower, and colder, every night. Something beneath the old places is drinking its light.'],
+    ['hessa', 'Long ago the Ember Heart was split into three shards. Three guardians swore to hide them from the thing below: a king, a forest warden, and the sea\'s own beast.'],
+    ['hessa', 'They have been alone in the dark too long. Whatever they are now, they still hold the shards. Bring them home, and the Hearth may wake.'],
+    ['hessa', 'Start with the Sunken Crypt beneath the old chapel. The Dungeon Gate to the north will take you. Brann at the forge can keep your steel sharp.'],
+  ],
+  crypt_enter: [
+    ['narr', 'The air smells of cold stone and old candle wax. Somewhere below, armour scrapes against bone.'],
+    ['hero', 'Hessa said the first guardian was a king. Kings don\'t give things back easily.'],
+  ],
+  hollowking_intro: [
+    { cam: 'boss' },
+    ['king', 'Another thief, come for my crown.'],
+    ['king', 'I have kept it through ten thousand nights. I will keep it through ten thousand more.'],
+    ['hero', 'Your people need what you\'re guarding. Hearthlight is dying.'],
+    ['king', 'Hearthlight... I remember warmth. I no longer remember why it mattered. Come, then. Let steel decide.'],
+  ],
+  hollowking_dead: [
+    ['king', 'Ah... the cold... it lets go of me.'],
+    ['king', 'Take the shard, child. Tell them Aldric kept his oath... longer than he should have.'],
+    { banner: ['Shard of the Crown', 'The first piece of the Ember Heart'] },
+  ],
+  crypt_return: [
+    { cam: 'hearth' }, { fx: 'flare' },
+    ['hessa', 'Look! The Hearth remembers its shard. It hasn\'t burned this bright in a generation.'],
+    ['brann', 'Felt it from the forge. Even the iron sings warmer. Whatever you did down there, do it twice more.'],
+    ['hessa', 'The second guardian is Sylwen, warden of the old grove. The forest swallowed her temple, and maybe her with it. The Gate can take you to the Overgrown Ruins now.'],
+  ],
+  forest_enter: [
+    ['narr', 'The ruins breathe. Roots shift whenever you look away.'],
+    ['narr', 'Pale flowers turn to follow you, like faces.'],
+  ],
+  thornmother_intro: [
+    { cam: 'boss' },
+    ['thorn', 'Little ember. Little spark. You smell of ash and fire.'],
+    ['thorn', 'Fire is what he wants. Fire is what I hide. Every root in this place is a wall around it.'],
+    ['hero', 'Sylwen? Hessa sent me. The shard belongs to the Hearth now.'],
+    ['thorn', 'Sylwen was a name. Now I am only the forest\'s teeth. Come closer, and be planted.'],
+  ],
+  thornmother_dead: [
+    ['thorn', 'The roots... loosen. I can hear the wind again.'],
+    ['thorn', 'Carry the Shard of the Root home. And when the war is done, let this grove rest. It has earned it.'],
+    { banner: ['Shard of the Root', 'The second piece of the Ember Heart'] },
+  ],
+  forest_return: [
+    { cam: 'hearth' }, { fx: 'flare' },
+    ['mira', 'Customers are back! Farm folk saw the light from the hills. Business is warming up, in more ways than one.'],
+    ['hessa', 'Two shards. The Hearth\'s song is almost whole.'],
+    ['hessa', 'The last guardian never had a name. The fishers called it the Tidewyrm. It carried the Shard of the Tide into the drowned grotto under the cliffs.'],
+    ['vesh', 'Mind the deep pools down there. The things in that grotto have been listening to something beneath them.'],
+  ],
+  cave_enter: [
+    ['narr', 'Black water laps at the stones. Every drip echoes like a footstep.'],
+    ['narr', 'Far below, something vast turns over in its sleep.'],
+  ],
+  tidewyrm_intro: [
+    { cam: 'boss' },
+    ['narr', 'The water heaves. Two lamps of yellow light open in the dark.'],
+    ['wyrm', 'It does not speak. It only bares its teeth, and behind them glows a faint ember light.'],
+    ['hero', 'Easy. I\'m not here to hurt you. I need that light.'],
+    ['narr', 'The Tidewyrm roars, and the whole grotto roars with it.'],
+  ],
+  tidewyrm_dead: [
+    ['narr', 'The great body sinks, almost gently. As the water settles, the shard drifts up into your hands, warm as a heartbeat.'],
+    ['narr', 'Beneath where the wyrm lay, a crack in the sea floor breathes out freezing air.'],
+    { banner: ['Shard of the Tide', 'The Ember Heart is whole again'] },
+  ],
+  cave_return: [
+    { cam: 'hearth' },
+    ['hessa', 'All three. Set them in the fire.'],
+    { fx: 'flare' },
+    ['narr', 'The shards sink into the Hearth. For a heartbeat the whole valley is bright as noon.'],
+    ['hessa', 'There. The Ember Heart is whole, and now it can see what we couldn\'t.'],
+    ['vesh', 'The Gate is humming. It has found a new road, deeper than any map. Down into the Hollow Below.'],
+    ['hessa', 'That is where it waits. The Pale Sovereign, the cold that eats light. The guardians held it back for centuries. Now it\'s your turn.'],
+    ['brann', 'Here. I sharpened everything you own. Twice. Come back so I can do it again.'],
+  ],
+  abyss_enter: [
+    ['narr', 'There is no sound here. Even the torches burn pale and blue.'],
+    ['narr', 'Frost covers the walls in the shape of reaching hands.'],
+  ],
+  sovereign_intro: [
+    { cam: 'boss' },
+    ['sov', 'So. The little fire sends its last spark.'],
+    ['sov', 'I wore down a king. I rotted a forest. I drowned the sea\'s own god. What are you?'],
+    ['hero', 'Someone who keeps coming home.'],
+    ['sov', 'Then let us see how long you burn.'],
+  ],
+  sovereign_dead: [
+    ['sov', 'Impossible... so small... so warm...'],
+    ['narr', 'The Pale Sovereign shatters like a winter lake. For the first time in a thousand years, the Hollow Below is silent, and warm.'],
+    ['narr', 'Far above, faint as a dream, you can hear a village cheering.'],
+  ],
+  epilogue: [
+    { cam: 'hearth' }, { fx: 'flare' },
+    ['hessa', 'You came back. Of course you did.'],
+    ['hessa', 'Look at it. The Hearth doesn\'t flicker anymore. Children are sleeping without candles for the first time in my life.'],
+    ['brann', 'Drinks are on Mira.'],
+    ['mira', 'Drinks are absolutely not on Mira.'],
+    ['vesh', 'Aldric, Sylwen, the wyrm. I\'ll carve their names on the monument. Yours too, if you\'ll let me.'],
+    ['hessa', 'The long night is over. But the dark is patient, and the old places are still full of trouble. Hearthlight will always need a keeper.'],
+    { credits: true },
+  ],
+};
+// boss key -> scene ids
+const BOSS_SCENES = { hollowking: 'hollowking', thornmother: 'thornmother', tidewyrm: 'tidewyrm', sovereign: 'sovereign' };
+const RETURN_SCENES = [['abyss', 'epilogue'], ['cave', 'cave_return'], ['forest', 'forest_return'], ['crypt', 'crypt_return']];
+
+// lore carved into memory stones, four per dungeon
+const LORE = {
+  crypt: [
+    ['The Oath', 'King Aldric took the Shard of the Crown into the earth so the light could never be stolen. His knights followed him down. None came back up.'],
+    ['Day Four Hundred', 'The candles will not stay lit. The King says the cold is only the stone. The King no longer eats.'],
+    ['A Shaking Hand', 'Scratched deep into the wall: HE WHISPERS THROUGH THE SHARD. HE SAYS THE FIRE ABOVE IS A LIE.'],
+    ['The Roll of Knights', 'A list of names, each one struck through. The last line reads: "Only I remain to keep it. Only I."'],
+  ],
+  forest: [
+    ['The Planting', 'Sylwen set the Shard of the Root in the heart of the oldest tree, so the forest itself would guard it.'],
+    ['Hunger', 'The trees grew too fast after that, and grew hungry. Sylwen said they were only protecting her.'],
+    ['Carved in Bark', 'SHE DOES NOT SLEEP. SHE DOES NOT LEAVE. SHE HAS BECOME THE TREE.'],
+    ['A Child\'s Drawing', 'A woman with flowers in her hair, smiling. Someone has carved thorns over her face.'],
+  ],
+  cave: [
+    ['The Fishers\' Song', 'The fishers sang that the wyrm guarded the bay long before the village. It took the Shard of the Tide without being asked.'],
+    ['Pearls', 'Pearls grow here around tiny splinters of light. The shard is bleeding into the water.'],
+    ['The Priests\' Warning', 'THE COLD ONE SPEAKS FROM UNDER THE SEA FLOOR. THE WYRM IS ALL THAT HOLDS THE DOOR.'],
+    ['Claw Marks', 'Deep gouges in the stone, as if something enormous was dragged downward and fought every inch.'],
+  ],
+  abyss: [
+    ['The Fallen Star', 'Before the valley had a name, a star fell and did not burn. It only grew cold, and hungry for every light it could reach.'],
+    ['The First Fire', 'The first villagers built the Hearth to hide their fire from it. The Ember Heart is the warmth of every home, gathered into one flame.'],
+    ['Frost-Script', 'GIVE ME THE LAST FIRE AND I WILL LET YOU SLEEP.'],
+    ['Four Shadows', 'Three shapes are etched into the ice: a crowned king, a woman wreathed in roots, a great coiled beast. Beneath them, a fourth shape, unfinished. Yours.'],
+  ],
+};
+const LORE_TOTAL = Object.values(LORE).reduce((a, l) => a + l.length, 0);
+
+// chapter-aware village chatter
+const NPC_STORY = {
+  hessa: [['The Hearth is fading. The Sunken Crypt waits beyond the Gate.'], ['One shard home. Sylwen\'s grove is next, in the Overgrown Ruins.'], ['Two shards. Only the Tidewyrm\'s remains, deep in the Flooded Grotto.'], ['The Heart is whole. The Hollow Below is open. Be careful, child.'], ['The fire is safe. Rest, then go and make the old places quiet again.']],
+  brann: [['Bring me iron and I\'ll make that blade sing. You\'ll need it down there.'], ['Aldric\'s crypt steel was good once. Bring me scraps, I\'ll make it good again.'], ['The forge hasn\'t been this hot in years. Must be your shards.'], ['Everything you own, sharpened twice. Go end it.'], ['Heard they\'re carving your name on the monument. Spell it right, Vesh.']],
+  mira: [['Gold for goods, goods for gold. Times are hard; prices are fair-ish.'], ['A shard of the Ember Heart! I don\'t suppose it\'s for sale.'], ['More travellers every night. They come for the light. They stay for my prices.'], ['If you don\'t come back, can I have your stash?'], ['Business has never been better. The valley owes you. I don\'t, technically.']],
+  vesh: [['The cards remember power. The Hearth remembers warmth. Both are fading.'], ['The shard sings in a key I\'ve never heard. Fascinating.'], ['Two shards, and the Gate has started whispering. I don\'t like what it says.'], ['The Hollow Below is older than the valley. Trust nothing there that speaks.'], ['I\'m writing it all down. Someone should remember how the long night ended.']],
+};
+function storyChapter(P) { const c = P.flags.clears; return c.abyss ? 4 : c.cave ? 3 : c.forest ? 2 : c.crypt ? 1 : 0; }
+function npcLine(id) {
+  const P = G.P;
+  if (P && P.story && P.story.on && NPC_STORY[id]) return pick(NPC_STORY[id][storyChapter(P)]);
+  return NPC_LINES[id] ? pick(NPC_LINES[id]) : '';
+}
+function storyObjective(P) {
+  if (!P || !P.story || !P.story.on) return '';
+  const c = P.flags.clears;
+  if (!P.story.seen.prologue) return 'Speak with Elder Hessa by the Hearth';
+  if (!c.crypt) return 'Free the guardian of the Sunken Crypt';
+  if (!c.forest) return 'Free the guardian of the Overgrown Ruins';
+  if (!c.cave) return 'Free the guardian of the Flooded Grotto';
+  if (!c.abyss) return 'Descend into the Hollow Below and face the Pale Sovereign';
+  return 'The Hearth endures. Veteran and Nightmare tiers await.';
+}
+
+// ---------------------------------------------------------------------------
+//  Dialogue / cutscene runner
+//  modal: full dialogue box, advances on E/Space/Enter/click (solo also pauses the world)
+//  bark: subtitle-style, auto-advances, never blocks (used in co-op dungeons)
+// ---------------------------------------------------------------------------
+const Story = {
+  el: null, steps: null, i: 0, chars: 0, line: null, modal: false, onEnd: null, wait: 0, blipT: 0, queue: [],
+  init() {
+    const css = document.createElement('style');
+    css.textContent = `
+#dlg{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);width:min(760px,92vw);display:flex;gap:14px;align-items:flex-start;padding:14px 16px;pointer-events:auto;
+  background:linear-gradient(rgba(33,20,47,.96),rgba(18,11,28,.96));border:2px solid #000;box-shadow:0 0 0 1px var(--border2) inset,0 0 0 3px #000,0 16px 50px #000c;z-index:40;cursor:pointer;user-select:none}
+#dlg.bark{bottom:auto;top:96px;width:min(620px,88vw);padding:8px 12px;background:rgba(12,7,20,.82);box-shadow:0 0 0 1px var(--border) inset;pointer-events:none;cursor:default}
+#dlg canvas{width:84px;height:84px;image-rendering:pixelated;flex:none;border:1px solid #000;box-shadow:0 0 0 1px var(--border2) inset;background:#120a1c}
+#dlg.bark canvas{width:48px;height:48px}
+#dlg .dn{font-family:var(--serif);font-size:18px;margin-bottom:4px;letter-spacing:.5px}
+#dlg .dt{font-family:var(--serif);font-size:17px;line-height:1.45;color:var(--text);min-height:50px}
+#dlg.bark .dt{font-size:15px;min-height:0}
+#dlg .dt.narr{font-style:italic;color:#cbb9de}
+#dlg .dh{position:absolute;right:12px;bottom:6px;font-size:11px;color:var(--dim);letter-spacing:1px}
+#dlg.bark .dh{display:none}
+#dlg .dw{flex:1;min-width:0}
+#cine-top,#cine-bot{position:absolute;left:0;right:0;height:0;background:#000;transition:height .35s;z-index:39;pointer-events:none}
+#cine-top{top:0}#cine-bot{bottom:0}
+.cine #cine-top,.cine #cine-bot{height:7vh}
+#objective{margin-top:4px;font-size:12px;color:#f0d8a8;text-shadow:0 1px 0 #000;max-width:240px;margin-left:auto;line-height:1.35}
+#objective b{color:var(--gold);font-weight:normal;font-family:var(--serif);letter-spacing:1px;font-size:11px;text-transform:uppercase;display:block;opacity:.8}
+.endroll{text-align:center;min-width:min(560px,90vw)}
+.endroll .t1{font-family:var(--serif);font-size:44px;color:#f7e2bb;text-shadow:0 0 30px rgba(255,150,60,.4);letter-spacing:3px}
+.endroll .t2{color:var(--dim);letter-spacing:6px;text-transform:uppercase;font-size:12px;margin:6px 0 18px}
+.endroll .roll{height:220px;overflow:hidden;position:relative;mask-image:linear-gradient(transparent,#000 15%,#000 85%,transparent)}
+.endroll .roll div{position:absolute;left:0;right:0;animation:roll 26s linear forwards}
+.endroll p{margin:10px 0;line-height:1.5}
+@keyframes roll{from{transform:translateY(220px)}to{transform:translateY(-100%)}}
+@media (prefers-reduced-motion: reduce){.endroll .roll div{animation:none;position:static}.endroll .roll{height:auto;mask-image:none}}
+.lore{border-left:2px solid var(--border2);padding:4px 10px;margin:6px 0}
+.lore .lt{font-family:var(--serif);color:var(--gold)}
+.chap{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #ffffff10}
+.chap .cs{width:22px;text-align:center;color:var(--gold)}
+.chap.todo{opacity:.45}
+`;
+    document.head.appendChild(css);
+    const hud = $('hud');
+    const obj = h('div', { id: 'objective' }); $('minimap-wrap').appendChild(obj);
+    $('game').appendChild(h('div', { id: 'cine-top' })); $('game').appendChild(h('div', { id: 'cine-bot' }));
+    this.el = h('div', { id: 'dlg', class: 'hidden' }, h('canvas', { width: 32, height: 32 }), h('div', { class: 'dw' }, h('div', { class: 'dn' }), h('div', { class: 'dt' })), h('div', { class: 'dh' }, 'E / SPACE ▸   ESC skip'));
+    this.el.addEventListener('mousedown', (e) => { e.stopPropagation(); this.advance(); });
+    $('game').appendChild(this.el);
+  },
+  get active() { return !!this.steps; },
+  // play a scene once per save (id), or always when id is null
+  play(id, opts = {}) {
+    const P = G.P; if (!P || !P.story || !P.story.on) { opts.onEnd && opts.onEnd(); return false; }
+    if (id && P.story.seen[id]) return false;
+    if (id) { P.story.seen[id] = true; saveGame(); }
+    const steps = STORY[id]; if (!steps) return false;
+    const bark = opts.bark ?? (Net.role !== 'solo' && G.scene === 'dungeon');
+    if (this.steps) { this.queue.push([steps, { ...opts, bark }]); return true; }
+    this.start(steps, { ...opts, bark });
+    return true;
+  },
+  start(steps, opts) {
+    this.steps = steps; this.i = -1; this.modal = !opts.bark; this.onEnd = opts.onEnd || null;
+    G.cutscene = this.modal;
+    this.el.classList.toggle('bark', !this.modal); this.el.classList.remove('hidden');
+    $('game').classList.toggle('cine', this.modal);
+    if (this.modal) { closeMenu(); hideTip(); Input.buf = {}; }
+    this.next();
+  },
+  next() {
+    this.i++;
+    while (this.steps && this.i < this.steps.length && !Array.isArray(this.steps[this.i])) { this.doStep(this.steps[this.i]); this.i++; if (!this.steps) return; }
+    if (!this.steps || this.i >= this.steps.length) { this.end(); return; }
+    const [who, text] = this.steps[this.i], S = SPEAKERS[who] || SPEAKERS.narr;
+    this.line = { who, text, S }; this.chars = 0; this.wait = 0;
+    const name = who === 'hero' ? (G.P ? G.P.name : 'You') : S.name;
+    const dn = this.el.querySelector('.dn'), dt = this.el.querySelector('.dt'), cv = this.el.querySelector('canvas');
+    dn.textContent = name || ''; dn.style.color = who === 'hero' ? (G.P ? G.P.color : '#fff') : (S.color || '#fff');
+    dt.textContent = ''; dt.classList.toggle('narr', who === 'narr' || (who === 'wyrm' && !text.startsWith('"')));
+    cv.style.display = S.spr ? '' : 'none';
+    if (S.spr) drawPortrait(cv, S);
+  },
+  doStep(s) {
+    if (s.cam === 'hearth' && G.world && G.world.map.hearth) G.camTarget = { x: G.world.map.hearth.x, y: G.world.map.hearth.y - 20 };
+    if (s.cam === 'boss' && G.world) { for (const e of G.world.ents.values()) if (e.boss) G.camTarget = { x: (e.x + G.me.x) / 2, y: Math.min(e.y - 30, (e.y + G.me.y) / 2 - 10) }; }
+    if (s.cam === 'me') G.camTarget = null;
+    if (s.fx === 'flare' && G.world && G.world.map.hearth) {
+      const hx = G.world.map.hearth.x, hy = G.world.map.hearth.y; G.flashScreen = 0.5; SFX.play('lootEpic', 0.9); shake(4);
+      for (let i = 0; i < 70; i++) { const a = rnd(0, TAU), sp = rnd(30, 160); G.fx.parts.push(part(hx, hy - 10, Math.cos(a) * sp, Math.sin(a) * sp - 60, pick(['#ffd76a', '#ff9a3c', '#fff2c0']), rnd(0.6, 1.4), rnd(1, 3), true, 60)); }
+      ringFx(hx, hy, 6, 120, '#ffb35a', 0.6);
+    }
+    if (s.banner) banner(s.banner[0], s.banner[1], '', 3);
+    if (s.credits) this.pendingCredits = true;
+  },
+  update(dt) {
+    if (!this.steps || !this.line) return;
+    const L = this.line.text.length;
+    if (this.chars < L) {
+      this.chars = Math.min(L, this.chars + dt * 48);
+      this.el.querySelector('.dt').textContent = this.line.text.slice(0, Math.floor(this.chars));
+      this.blipT -= dt; if (this.blipT <= 0 && this.line.who !== 'narr') { this.blipT = 0.07; SFX.play('ui', 0.18, 0.7 + (this.line.who.length % 4) * 0.12); }
+    } else if (!this.modal) {
+      this.wait += dt; if (this.wait > 1.6 + L * 0.035) this.next();
+    }
+  },
+  advance() {
+    if (!this.steps || !this.modal) return;
+    if (this.chars < this.line.text.length) { this.chars = this.line.text.length; this.el.querySelector('.dt').textContent = this.line.text; return; }
+    SFX.play('ui', 0.4); this.next();
+  },
+  skip() { if (!this.steps) return; for (let k = this.i + 1; k < this.steps.length; k++) if (!Array.isArray(this.steps[k])) this.doStep(this.steps[k]); this.end(); },
+  end() {
+    this.steps = null; this.line = null; G.cutscene = false; G.camTarget = null;
+    this.el.classList.add('hidden'); $('game').classList.remove('cine');
+    Input.buf = {};
+    const cb = this.onEnd; this.onEnd = null; cb && cb();
+    (UI.heldToasts || []).splice(0).forEach((a, k) => setTimeout(() => toast(...a), 400 + k * 900));
+    if (this.pendingCredits) { this.pendingCredits = false; showEndCredits(); return; }
+    if (this.queue.length) { const [s, o] = this.queue.shift(); this.start(s, o); }
+  },
+};
+function drawPortrait(cv, S) {
+  const s = S.spr(); if (!s) return;
+  const [cx, cy, cw, ch] = S.crop, n = Math.max(cw, ch);
+  cv.width = n; cv.height = n;
+  const x = cv.getContext('2d'); x.imageSmoothingEnabled = false;
+  const g = x.createRadialGradient(n / 2, n * 0.45, 1, n / 2, n / 2, n * 0.7); g.addColorStop(0, '#3a2654'); g.addColorStop(1, '#120a1c'); x.fillStyle = g; x.fillRect(0, 0, n, n);
+  x.drawImage(s.frames[0], cx, cy, cw, ch, Math.floor((n - cw) / 2), Math.floor((n - ch) / 2) + 2, cw, ch);
+}
+
+// ---------------------------------------------------------------------------
+//  Story hooks called from the game
+// ---------------------------------------------------------------------------
+function storyOnVillage() {
+  const P = G.P; if (!P || !P.story || !P.story.on) return;
+  setTimeout(() => {
+    if (G.scene !== 'village') return;
+    if (!P.story.seen.prologue) { Story.play('prologue'); return; }
+    for (const [did, id] of RETURN_SCENES) if (P.flags.clears[did] && !P.story.seen[id]) { setTimeout(() => { if (G.scene === 'village') Story.play(id); }, 2300); return; }
+  }, 900);
+}
+function storyOnDungeon(did) { setTimeout(() => { if (G.scene === 'dungeon') Story.play(did + '_enter'); }, 2600); }
+function storyOnBoss(ev, bk) {
+  const base = BOSS_SCENES[bk]; if (!base) return;
+  if (ev === 'intro') Story.play(base + '_intro');
+  if (ev === 'dead') setTimeout(() => Story.play(base + '_dead'), 1600);
+}
+// turning story on for an older save: skip beats already lived through
+function enableStory(P) {
+  P.story = P.story || { on: false, seen: {}, lore: [] };
+  P.story.on = true;
+  const c = P.flags.clears;
+  if (c.crypt || c.forest || c.cave || c.abyss) P.story.seen.prologue = true;
+  for (const [did, id] of RETURN_SCENES) if (c[did]) { P.story.seen[id] = true; P.story.seen[did + '_enter'] = true; }
+  for (const [bk, base] of Object.entries(BOSS_SCENES)) { const did = Object.keys(DUNGEONS).find(k => DUNGEONS[k].boss === bk); if (c[did]) { P.story.seen[base + '_intro'] = true; P.story.seen[base + '_dead'] = true; } }
+}
+// memory stones (placed by the dungeon generator; read locally by each player)
+function readStone(stone) {
+  const P = G.P, did = G.world.dun.did, list = LORE[did] || [];
+  P.story = P.story || { on: false, seen: {}, lore: [] };
+  const idx = list.findIndex((_, i) => !P.story.lore.includes(did + i));
+  stone.read = true; SFX.play('portal', 0.5); sparkFx(stone.x, stone.y - 14, '#a8d8ff', 12);
+  if (idx < 0) { toast('The stone\'s words have worn away. You have read all it can tell.'); return; }
+  P.story.lore.push(did + idx); saveGame(); checkAchievements();
+  const [title, text] = list[idx];
+  const bark = Net.role !== 'solo';
+  Story.start([['narr', text]], { bark });
+  toast(`<div class="tt" style="color:var(--gold)">Lore found</div>${esc(title)} · ${P.story.lore.length}/${LORE_TOTAL}`, 'ach', 3.5);
+}
+
+// ---------------------------------------------------------------------------
+//  Story tab (pause menu) and end credits
+// ---------------------------------------------------------------------------
+function tabStory(body) {
+  const P = G.P, st = P.story || { on: false, seen: {}, lore: [] };
+  if (!st.on) {
+    body.appendChild(h('h3', {}, 'Story mode is off'));
+    body.appendChild(h('div', { class: 'note', style: { maxWidth: '560px', marginBottom: '10px', lineHeight: 1.5 } }, 'Story mode adds the tale of the Ember Heart: cutscenes, guardian dialogue, a fourth dungeon and a final boss. Turning it on keeps all your progress; chapters you already finished count as done.'));
+    body.appendChild(btn('Turn on story mode', () => { enableStory(P); saveGame(); toast('Story mode on. Return to the village to continue the tale.'); refreshMenu(); }, 'primary'));
+    return;
+  }
+  const c = P.flags.clears;
+  body.appendChild(h('div', { class: 'statrow' }, h('span', {}, 'Current objective'), h('b', {}, storyObjective(P))));
+  body.appendChild(h('h3', {}, 'Chapters'));
+  const chapters = [['Prologue', 'The Last Fire', st.seen.prologue], ['I', 'The Hollow King', c.crypt], ['II', 'The Thornmother', c.forest], ['III', 'The Tidewyrm', c.cave], ['IV', 'The Pale Sovereign', c.abyss]];
+  let current = chapters.findIndex(x => !x[2]);
+  chapters.forEach(([num, name, done], i) => body.appendChild(h('div', { class: 'chap' + (done || i === current ? '' : ' todo') }, h('span', { class: 'cs' }, done ? '✓' : i === current ? '▸' : '·'), h('span', { style: { fontFamily: 'var(--serif)', width: '74px', color: 'var(--dim)' } }, num), h('span', {}, name))));
+  body.appendChild(h('h3', {}, `Lore (${st.lore.length}/${LORE_TOTAL})`));
+  if (!st.lore.length) body.appendChild(h('div', { class: 'note' }, 'Memory stones glow pale blue in the dungeons. Press E beside one to read it.'));
+  for (const did of Object.keys(LORE)) for (let i = 0; i < LORE[did].length; i++) if (st.lore.includes(did + i)) body.appendChild(h('div', { class: 'lore' }, h('div', { class: 'lt' }, `${LORE[did][i][0]} · ${DUNGEONS[did].short}`), h('div', { class: 'note', style: { lineHeight: 1.5 } }, LORE[did][i][1])));
+  body.appendChild(h('div', { style: { marginTop: '12px' } }, btn('Turn off cutscenes', () => { st.on = false; saveGame(); refreshMenu(); }, 'small')));
+}
+function showEndCredits() {
+  const P = G.P, s = P.stats;
+  Music.play('victory');
+  openMenu('endroll', (p) => {
+    p.classList.add('endroll');
+    p.appendChild(h('div', { class: 't1' }, 'The Long Night Ends'));
+    p.appendChild(h('div', { class: 't2' }, `${P.name} · Keeper of the Hearth`));
+    const roll = h('div', { class: 'roll' }, h('div', {},
+      h('p', { html: `<b style="color:var(--gold)">Your journey</b><br>Level ${P.level} · ${fmt(s.kills)} foes defeated · ${s.deaths} falls · ${Math.floor(s.playtime / 60)} minutes` }),
+      h('p', { html: 'King Aldric of the Sunken Crypt<br>Sylwen, Warden of the Grove<br>The Tidewyrm of the Flooded Grotto<br><i>who kept the Ember Heart through the long night</i>' }),
+      h('p', { html: 'Elder Hessa · Brann the Smith · Mira the Trader<br>Vesh the Arcanist · Lute the Bard<br>and everyone in Hearthlight' }),
+      h('p', { html: 'Everything you saw and heard was drawn,<br>written and composed in code for this game.' }),
+      h('p', { html: '<b style="color:var(--gold)">Thank you for keeping the fire.</b><br>Veteran and Nightmare tiers await in every dungeon.' })));
+    p.appendChild(roll);
+    p.appendChild(h('div', { style: { marginTop: '16px' } }, btn('Continue playing', () => { closeMenu(); Music.play('village'); }, 'primary')));
+  }, { noClose: true });
+}
 
 </script>
 </body>
